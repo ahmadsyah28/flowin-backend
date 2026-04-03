@@ -1,4 +1,4 @@
-import { RegisterInput } from "@/types";
+import { RegisterInput } from "../../../types";
 export declare const authResolvers: {
     Mutation: {
         register: (_: unknown, { input }: {

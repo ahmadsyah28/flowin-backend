@@ -1,4 +1,4 @@
-import { GraphQLContext, CreateKoneksiDataInput, UpdateKoneksiDataInput } from "@/types";
+import { GraphQLContext, CreateKoneksiDataInput, UpdateKoneksiDataInput } from "../../../types";
 export declare const koneksiDataResolvers: {
     Query: {
         koneksiDataByPelanggan: (_: unknown, __: unknown, context: GraphQLContext) => Promise<{

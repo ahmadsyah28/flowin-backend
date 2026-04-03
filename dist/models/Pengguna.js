@@ -50,8 +50,9 @@ const penggunaSchema = new mongoose_1.Schema({
     },
     noHP: {
         type: String,
-        required: true,
+        required: false,
         trim: true,
+        default: "",
     },
     namaLengkap: {
         type: String,
@@ -60,7 +61,7 @@ const penggunaSchema = new mongoose_1.Schema({
     },
     password: {
         type: String,
-        required: true,
+        required: false,
     },
     token: {
         type: String,
@@ -70,16 +71,39 @@ const penggunaSchema = new mongoose_1.Schema({
         type: Boolean,
         default: false,
     },
+    googleId: {
+        type: String,
+        required: false,
+        sparse: true,
+    },
+    profilePicture: {
+        type: String,
+        required: false,
+    },
+    authProvider: {
+        type: String,
+        enum: ["email", "google"],
+        default: "email",
+    },
     ...BaseModel_1.baseSchemaFields,
 });
 (0, BaseModel_1.addBaseMiddleware)(penggunaSchema);
 penggunaSchema.pre("save", async function () {
-    if (!this.isModified("password"))
+    if (!this.isModified("password") || !this.password) {
         return;
-    const salt = await bcryptjs_1.default.genSalt(12);
-    this.password = await bcryptjs_1.default.hash(this.password, salt);
+    }
+    try {
+        const salt = await bcryptjs_1.default.genSalt(12);
+        this.password = await bcryptjs_1.default.hash(this.password, salt);
+    }
+    catch (error) {
+        throw error;
+    }
 });
 penggunaSchema.methods.comparePassword = async function (candidatePassword) {
+    if (!this.password) {
+        return false;
+    }
     return bcryptjs_1.default.compare(candidatePassword, this.password);
 };
 exports.Pengguna = mongoose_1.default.model("Pengguna", penggunaSchema);

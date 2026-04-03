@@ -1,8 +1,11 @@
 import mongoose, { Types } from "mongoose";
 import { IBaseDocument } from "./BaseModel";
+import { StatusPengajuan } from "../enums";
 export interface IKoneksiData extends IBaseDocument {
     IdPelanggan: Types.ObjectId;
-    StatusVerifikasi: boolean;
+    StatusPengajuan: StatusPengajuan;
+    AlasanPenolakan?: string;
+    TanggalVerifikasi?: Date;
     NIK: string;
     NIKUrl: string;
     NoKK: string;

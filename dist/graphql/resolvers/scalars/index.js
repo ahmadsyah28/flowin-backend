@@ -1,7 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.scalarsResolvers = void 0;
-const graphql_1 = require("graphql");
+const graphql_1 = require("../../../graphql");
 const language_1 = require("graphql/language");
 exports.scalarsResolvers = {
     DateTime: new graphql_1.GraphQLScalarType({

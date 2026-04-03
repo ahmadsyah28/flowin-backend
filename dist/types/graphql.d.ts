@@ -1,6 +1,5 @@
-import { Request } from "express";
-import { IPengguna, IKoneksiData, ITagihan, IMeter, IGeoLokasi, INotifikasi, IRiwayatRagihan } from "@/models";
-import { EnumJenisLaporan, EnumWorkStatusPelanggan } from "@/enums";
+import { IPengguna, IKoneksiData, ITagihan, IMeter, IGeoLokasi, INotifikasi, IRiwayatPenggunaan } from "../models";
+import { EnumJenisLaporan, EnumWorkStatusPelanggan } from "../enums";
 export interface Pengguna extends Omit<IPengguna, "password" | "token"> {
     id: string;
 }
@@ -38,14 +37,14 @@ export interface GeoLokasi extends IGeoLokasi {
 export interface Notifikasi extends INotifikasi {
     id: string;
 }
-export interface RiwayatRagihan extends IRiwayatRagihan {
+export interface RiwayatPenggunaan extends IRiwayatPenggunaan {
     id: string;
     meter?: Meter;
 }
 export interface GraphQLContext {
-    req: Request;
+    req: any;
     user?: IPengguna;
-    token?: string;
+    isAuthenticated: boolean;
 }
 export interface AuthPayload {
     token: string;
@@ -88,11 +87,5 @@ export interface CreateLaporanInput {
     Catatan?: string;
     Latitude: number;
     Longitude: number;
-}
-export interface JWTPayload {
-    penggunaId: string;
-    email: string;
-    iat: number;
-    exp: number;
 }
 //# sourceMappingURL=graphql.d.ts.map

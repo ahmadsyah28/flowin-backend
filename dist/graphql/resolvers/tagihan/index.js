@@ -1,9 +1,9 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.tagihanResolvers = void 0;
-const graphql_1 = require("graphql");
-const models_1 = require("@/models");
-const enums_1 = require("@/enums");
+const graphql_1 = require("../../../graphql");
+const models_1 = require("../../../models");
+const enums_1 = require("../../../enums");
 exports.tagihanResolvers = {
     Query: {
         tagihanByPengguna: async (_, { penggunaId }, context) => {

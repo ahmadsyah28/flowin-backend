@@ -1,4 +1,4 @@
-import { GraphQLContext } from "@/types";
+import { GraphQLContext } from "../../../types";
 export declare const notifikasiResolvers: {
     Query: {
         notifikasiByPelanggan: (_: unknown, { pelangganId }: {

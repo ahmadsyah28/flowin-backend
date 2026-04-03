@@ -19,4 +19,5 @@ __exportStar(require("./payment"), exports);
 __exportStar(require("./laporan"), exports);
 __exportStar(require("./jenis-laporan"), exports);
 __exportStar(require("./work-status"), exports);
+__exportStar(require("./status-pengajuan"), exports);
 //# sourceMappingURL=index.js.map

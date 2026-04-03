@@ -1,8 +1,8 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.riwayatRagihanResolvers = void 0;
-const graphql_1 = require("graphql");
-const models_1 = require("@/models");
+const graphql_1 = require("../../../graphql");
+const models_1 = require("../../../models");
 exports.riwayatRagihanResolvers = {
     Query: {
         riwayatRagihanByMeter: async (_, { meterId }) => {

@@ -1,19 +1,15 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.deleteRedisData = exports.getRedisData = exports.setRedisData = exports.pingRedis = exports.getRedisClient = exports.connectRedis = void 0;
+exports.getKeys = exports.existsKey = exports.expireKey = exports.hincrby = exports.hincrbyfloat = exports.hmget = exports.hgetall = exports.hget = exports.hset = exports.deleteRedisData = exports.getRedisData = exports.setRedisData = exports.pingRedis = exports.getRedisClient = exports.connectRedis = void 0;
 const redis_1 = require("@upstash/redis");
+const index_1 = require("./index");
 let redisClient = null;
 const connectRedis = () => {
     try {
-        const redisUrl = process.env.UPSTASH_REDIS_REST_URL;
-        const redisToken = process.env.UPSTASH_REDIS_REST_TOKEN;
-        if (!redisUrl || !redisToken) {
-            throw new Error("UPSTASH_REDIS_REST_URL or UPSTASH_REDIS_REST_TOKEN is not defined");
-        }
         console.log("🔄 Initializing Redis (Upstash REST)...");
         redisClient = new redis_1.Redis({
-            url: redisUrl,
-            token: redisToken,
+            url: index_1.config.redis.url,
+            token: index_1.config.redis.token,
         });
         console.log("✅ Redis Client Initialized (Upstash REST)");
         return redisClient;
@@ -85,4 +81,103 @@ const deleteRedisData = async (key) => {
     }
 };
 exports.deleteRedisData = deleteRedisData;
+const hset = async (key, field, value) => {
+    try {
+        const client = (0, exports.getRedisClient)();
+        return await client.hset(key, { [field]: value });
+    }
+    catch (error) {
+        console.error("❌ Redis HSET failed:", error instanceof Error ? error.message : "Unknown error");
+        throw error;
+    }
+};
+exports.hset = hset;
+const hget = async (key, field) => {
+    try {
+        const client = (0, exports.getRedisClient)();
+        return await client.hget(key, field);
+    }
+    catch (error) {
+        console.error("❌ Redis HGET failed:", error instanceof Error ? error.message : "Unknown error");
+        throw error;
+    }
+};
+exports.hget = hget;
+const hgetall = async (key) => {
+    try {
+        const client = (0, exports.getRedisClient)();
+        return await client.hgetall(key);
+    }
+    catch (error) {
+        console.error("❌ Redis HGETALL failed:", error instanceof Error ? error.message : "Unknown error");
+        throw error;
+    }
+};
+exports.hgetall = hgetall;
+const hmget = async (key, fields) => {
+    try {
+        const client = (0, exports.getRedisClient)();
+        return await client.hmget(key, ...fields);
+    }
+    catch (error) {
+        console.error("❌ Redis HMGET failed:", error instanceof Error ? error.message : "Unknown error");
+        throw error;
+    }
+};
+exports.hmget = hmget;
+const hincrbyfloat = async (key, field, increment) => {
+    try {
+        const client = (0, exports.getRedisClient)();
+        return await client.hincrbyfloat(key, field, increment);
+    }
+    catch (error) {
+        console.error("❌ Redis HINCRBYFLOAT failed:", error instanceof Error ? error.message : "Unknown error");
+        throw error;
+    }
+};
+exports.hincrbyfloat = hincrbyfloat;
+const hincrby = async (key, field, increment) => {
+    try {
+        const client = (0, exports.getRedisClient)();
+        return await client.hincrby(key, field, increment);
+    }
+    catch (error) {
+        console.error("❌ Redis HINCRBY failed:", error instanceof Error ? error.message : "Unknown error");
+        throw error;
+    }
+};
+exports.hincrby = hincrby;
+const expireKey = async (key, seconds) => {
+    try {
+        const client = (0, exports.getRedisClient)();
+        return await client.expire(key, seconds);
+    }
+    catch (error) {
+        console.error("❌ Redis EXPIRE failed:", error instanceof Error ? error.message : "Unknown error");
+        throw error;
+    }
+};
+exports.expireKey = expireKey;
+const existsKey = async (key) => {
+    try {
+        const client = (0, exports.getRedisClient)();
+        return await client.exists(key);
+    }
+    catch (error) {
+        console.error("❌ Redis EXISTS failed:", error instanceof Error ? error.message : "Unknown error");
+        throw error;
+    }
+};
+exports.existsKey = existsKey;
+const getKeys = async (pattern) => {
+    try {
+        const client = (0, exports.getRedisClient)();
+        return await client.keys(pattern);
+    }
+    catch (error) {
+        console.error("❌ Redis KEYS failed:", error instanceof Error ? error.message : "Unknown error");
+        throw error;
+    }
+};
+exports.getKeys = getKeys;
 //# sourceMappingURL=redis.js.map

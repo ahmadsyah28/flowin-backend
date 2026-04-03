@@ -1,5 +1,5 @@
 export declare enum EnumNotifikasiKategori {
-    PEMBAYARAN = "Pembayaran",
-    INFORMASI = "Informasi"
+    PEMBAYARAN = "PEMBAYARAN",
+    INFORMASI = "INFORMASI"
 }
 //# sourceMappingURL=notifikasi.d.ts.map

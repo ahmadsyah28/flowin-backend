@@ -1,5 +1,5 @@
-import { GraphQLContext } from "@/types";
-import { EnumPaymentStatus } from "@/enums";
+import { GraphQLContext } from "../../../types";
+import { EnumPaymentStatus } from "../../../enums";
 export declare const tagihanResolvers: {
     Query: {
         tagihanByPengguna: (_: unknown, { penggunaId }: {

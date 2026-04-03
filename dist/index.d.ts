@@ -1,3 +1,4 @@
-import "dotenv/config";
-import "@/types/env";
+import { Request, Response } from "express";
+declare const handler: (req: Request, res: Response) => Promise<void>;
+export default handler;
 //# sourceMappingURL=index.d.ts.map

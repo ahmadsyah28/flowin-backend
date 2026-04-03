@@ -6,23 +6,19 @@ exports.baseSchemaFields = {
     updatedAt: { type: Date, default: Date.now },
 };
 const addBaseMiddleware = (schema) => {
-    schema.pre("save", function (next) {
+    schema.pre("save", function () {
         if (this.isModified() && !this.isNew) {
             this.updatedAt = new Date();
         }
-        next();
     });
-    schema.pre("findOneAndUpdate", function (next) {
+    schema.pre("findOneAndUpdate", function () {
         this.set({ updatedAt: new Date() });
-        next();
     });
-    schema.pre("updateOne", function (next) {
+    schema.pre("updateOne", function () {
         this.set({ updatedAt: new Date() });
-        next();
     });
-    schema.pre("updateMany", function (next) {
+    schema.pre("updateMany", function () {
         this.set({ updatedAt: new Date() });
-        next();
     });
 };
 exports.addBaseMiddleware = addBaseMiddleware;

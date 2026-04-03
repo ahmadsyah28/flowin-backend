@@ -36,6 +36,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.KoneksiData = void 0;
 const mongoose_1 = __importStar(require("mongoose"));
 const BaseModel_1 = require("./BaseModel");
+const enums_1 = require("../enums");
 const koneksiDataSchema = new mongoose_1.Schema({
     IdPelanggan: {
         type: mongoose_1.Schema.Types.ObjectId,
@@ -43,10 +44,20 @@ const koneksiDataSchema = new mongoose_1.Schema({
         required: [true, "ID Pelanggan is required"],
         index: true,
     },
-    StatusVerifikasi: {
-        type: Boolean,
-        default: false,
+    StatusPengajuan: {
+        type: String,
+        enum: Object.values(enums_1.StatusPengajuan),
+        default: enums_1.StatusPengajuan.PENDING,
         required: true,
+    },
+    AlasanPenolakan: {
+        type: String,
+        trim: true,
+        default: null,
+    },
+    TanggalVerifikasi: {
+        type: Date,
+        default: null,
     },
     NIK: {
         type: String,
@@ -117,9 +128,7 @@ const koneksiDataSchema = new mongoose_1.Schema({
     toObject: { virtuals: true },
 });
 (0, BaseModel_1.addBaseMiddleware)(koneksiDataSchema);
-koneksiDataSchema.index({ IdPelanggan: 1 });
-koneksiDataSchema.index({ NIK: 1 });
-koneksiDataSchema.index({ StatusVerifikasi: 1 });
+koneksiDataSchema.index({ StatusPengajuan: 1 });
 koneksiDataSchema.index({ Kecamatan: 1, Kelurahan: 1 });
 koneksiDataSchema.index({ createdAt: -1 });
 koneksiDataSchema.virtual("pelanggan", {
@@ -137,10 +146,10 @@ koneksiDataSchema.statics.findByPelanggan = function (pelangganId) {
     return this.findOne({ IdPelanggan: pelangganId }).populate("pelanggan");
 };
 koneksiDataSchema.statics.findVerified = function () {
-    return this.find({ StatusVerifikasi: true }).populate("pelanggan");
+    return this.find({ StatusPengajuan: enums_1.StatusPengajuan.APPROVED }).populate("pelanggan");
 };
 koneksiDataSchema.statics.findPendingVerification = function () {
-    return this.find({ StatusVerifikasi: false }).populate("pelanggan");
+    return this.find({ StatusPengajuan: enums_1.StatusPengajuan.PENDING }).populate("pelanggan");
 };
 exports.KoneksiData = mongoose_1.default.model("KoneksiData", koneksiDataSchema);
 //# sourceMappingURL=KoneksiData.js.map

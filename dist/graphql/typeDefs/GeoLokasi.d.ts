@@ -1,0 +1,2 @@
+export declare const geoLokasiTypeDefs = "\n  # Type untuk data geo lokasi\n  type GeoLokasi {\n    id: ObjectId!\n    idLaporan: ObjectId!\n    latitude: Float!\n    longitude: Float!\n    createdAt: Date!\n    updatedAt: Date!\n  }\n";
+//# sourceMappingURL=GeoLokasi.d.ts.map

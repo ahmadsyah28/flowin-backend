@@ -1,5 +1,5 @@
-import { GraphQLContext, CreateLaporanInput } from "@/types";
-import { EnumWorkStatusPelanggan } from "@/enums";
+import { GraphQLContext, CreateLaporanInput } from "../../../types";
+import { EnumWorkStatusPelanggan } from "../../../enums";
 export declare const laporanResolvers: {
     Query: {
         laporanByPengguna: (_: unknown, { penggunaId }: {
@@ -11,7 +11,7 @@ export declare const laporanResolvers: {
             Masalah: string;
             Alamat: string;
             ImageURL: string[];
-            JenisLaporan: import("@/enums").EnumJenisLaporan;
+            JenisLaporan: import("../../../enums").EnumJenisLaporan;
             Catatan: string;
             Koordinat: string;
             Status: EnumWorkStatusPelanggan;
@@ -27,7 +27,7 @@ export declare const laporanResolvers: {
             Masalah: string;
             Alamat: string;
             ImageURL: string[];
-            JenisLaporan: import("@/enums").EnumJenisLaporan;
+            JenisLaporan: import("../../../enums").EnumJenisLaporan;
             Catatan: string;
             Koordinat: string;
             Status: EnumWorkStatusPelanggan;
@@ -43,7 +43,7 @@ export declare const laporanResolvers: {
             Masalah: string;
             Alamat: string;
             ImageURL: string[];
-            JenisLaporan: import("@/enums").EnumJenisLaporan;
+            JenisLaporan: import("../../../enums").EnumJenisLaporan;
             Catatan: string;
             Koordinat: string;
             Status: EnumWorkStatusPelanggan;
@@ -61,7 +61,7 @@ export declare const laporanResolvers: {
             Masalah: string;
             Alamat: string;
             ImageURL: string[];
-            JenisLaporan: import("@/enums").EnumJenisLaporan;
+            JenisLaporan: import("../../../enums").EnumJenisLaporan;
             Catatan: string;
             Koordinat: string;
             Status: EnumWorkStatusPelanggan;
@@ -78,7 +78,7 @@ export declare const laporanResolvers: {
             Masalah: string;
             Alamat: string;
             ImageURL: string[];
-            JenisLaporan: import("@/enums").EnumJenisLaporan;
+            JenisLaporan: import("../../../enums").EnumJenisLaporan;
             Catatan: string;
             Koordinat: string;
             Status: EnumWorkStatusPelanggan;

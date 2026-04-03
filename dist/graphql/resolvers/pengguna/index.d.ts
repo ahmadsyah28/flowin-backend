@@ -1,4 +1,4 @@
-import { GraphQLContext, UpdateProfileInput } from "@/types";
+import { GraphQLContext, UpdateProfileInput } from "../../../types";
 export declare const penggunaResolvers: {
     Query: {
         me: (_: unknown, __: unknown, context: GraphQLContext) => Promise<{

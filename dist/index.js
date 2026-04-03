@@ -1,67 +1,73 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
-require("dotenv/config");
-require("@/types/env");
-const standalone_1 = require("@apollo/server/standalone");
-const database_1 = require("@/config/database");
-const redis_1 = require("@/config/redis");
-const graphql_1 = require("@/graphql");
-console.log("ENV MONGODB_URI:", process.env.MONGODB_URI ? "✅ Loaded" : "❌ NOT LOADED");
-async function startServer() {
-    try {
-        await (0, database_1.connectDB)();
-        (0, redis_1.connectRedis)();
-        const server = (0, graphql_1.createApolloServer)();
-        const PORT = parseInt(process.env.PORT || "4000", 10);
-        const { url } = await (0, standalone_1.startStandaloneServer)(server, {
-            listen: { port: PORT },
-            context: graphql_1.createContext,
-        });
-        console.log("=================================");
-        console.log("🚀 FLOWIN Backend Running");
-        console.log(`📍 GraphQL Endpoint : ${url}`);
-        console.log(`🧠 Environment      : ${process.env.NODE_ENV}`);
-        console.log("=================================");
-    }
-    catch (error) {
-        console.error("❌ Failed to start server");
-        if (error instanceof Error) {
-            console.error(error.message);
-            console.error(error.stack);
+const config_1 = require("./config");
+const express_1 = __importDefault(require("express"));
+const cors_1 = __importDefault(require("cors"));
+const server_1 = require("@apollo/server");
+const database_1 = require("./config/database");
+const redis_1 = require("./config/redis");
+const graphql_1 = require("./graphql");
+const typeDefs_1 = require("./graphql/typeDefs");
+const resolvers_1 = __importDefault(require("./graphql/resolvers"));
+const middlewares_1 = require("./middlewares");
+const midtransWebhook_1 = __importDefault(require("./webhooks/midtransWebhook"));
+const app = (0, express_1.default)();
+let apolloServer = null;
+let isInitialized = false;
+async function initializeServer() {
+    if (isInitialized)
+        return;
+    await (0, database_1.connectDB)();
+    (0, redis_1.connectRedis)();
+    apolloServer = new server_1.ApolloServer({
+        typeDefs: typeDefs_1.typeDefs,
+        resolvers: resolvers_1.default,
+        introspection: config_1.config.nodeEnv !== "production",
+        formatError: middlewares_1.formatGraphQLError,
+    });
+    await apolloServer.start();
+    app.use((0, cors_1.default)({ origin: config_1.config.corsOrigin }));
+    app.use("/api/webhook", express_1.default.json(), midtransWebhook_1.default);
+    app.use(config_1.config.graphqlPath, express_1.default.json(), async (req, res) => {
+        const contextValue = await (0, graphql_1.createContext)({ req });
+        const result = await apolloServer.executeOperation({
+            query: req.body.query,
+            variables: req.body.variables,
+            operationName: req.body.operationName,
+        }, { contextValue });
+        if (result.body.kind === "single") {
+            res.json(result.body.singleResult);
         }
         else {
-            console.error("Unknown error occurred");
+            res.json({ errors: [{ message: "Streaming not supported" }] });
         }
-        await (0, database_1.disconnectDB)();
-        process.exit(1);
-    }
+    });
+    isInitialized = true;
+    console.log("=================================");
+    console.log("FLOWIN Backend Initialized");
+    console.log(`GraphQL Endpoint : ${config_1.config.graphqlPath}`);
+    console.log(`Webhook Endpoint : /api/webhook/midtrans`);
+    console.log(`Environment      : ${config_1.config.nodeEnv}`);
+    console.log("=================================");
 }
-process.on("SIGINT", async () => {
-    console.log("\\n🛑 Shutting down server gracefully...");
-    try {
-        await (0, database_1.disconnectDB)();
-        console.log("✅ Server shutdown complete");
-        process.exit(0);
-    }
-    catch (error) {
-        console.error("❌ Error during shutdown:", error);
+const handler = async (req, res) => {
+    await initializeServer();
+    app(req, res);
+};
+exports.default = handler;
+if (config_1.config.nodeEnv !== "production") {
+    initializeServer()
+        .then(() => {
+        app.listen(config_1.config.port, () => {
+            console.log(`Local server running on http://localhost:${config_1.config.port}`);
+        });
+    })
+        .catch((error) => {
+        console.error("Failed to start local server:", error);
         process.exit(1);
-    }
-});
-process.on("SIGTERM", async () => {
-    console.log("\\n🛑 Received SIGTERM, shutting down gracefully...");
-    try {
-        await (0, database_1.disconnectDB)();
-        console.log("✅ Server shutdown complete");
-        process.exit(0);
-    }
-    catch (error) {
-        console.error("❌ Error during shutdown:", error);
-        process.exit(1);
-    }
-});
-startServer().catch((error) => {
-    console.error("❌ Unhandled error during server startup:", error);
-    process.exit(1);
-});
+    });
+}
 //# sourceMappingURL=index.js.map

@@ -1,8 +1,8 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.notifikasiResolvers = void 0;
-const graphql_1 = require("graphql");
-const models_1 = require("@/models");
+const graphql_1 = require("../../../graphql");
+const models_1 = require("../../../models");
 exports.notifikasiResolvers = {
     Query: {
         notifikasiByPelanggan: async (_, { pelangganId }, context) => {

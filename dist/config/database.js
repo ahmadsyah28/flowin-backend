@@ -6,15 +6,14 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.disconnectDB = exports.connectDB = void 0;
 const mongoose_1 = __importDefault(require("mongoose"));
 const dns_1 = require("dns");
+const index_1 = require("./index");
 (0, dns_1.setServers)(["8.8.8.8", "8.8.4.4"]);
 const connectDB = async () => {
+    if (mongoose_1.default.connection.readyState === 1)
+        return;
     try {
-        const mongoUri = process.env.MONGODB_URI;
-        if (!mongoUri) {
-            throw new Error("MONGODB_URI is not defined in environment variables");
-        }
         console.log("🔄 Connecting to MongoDB...");
-        await mongoose_1.default.connect(mongoUri, {
+        await mongoose_1.default.connect(index_1.config.mongoUri, {
             serverSelectionTimeoutMS: 20000,
         });
         console.log("✅ MongoDB Connected");
