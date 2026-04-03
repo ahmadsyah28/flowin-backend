@@ -1,0 +1,1 @@
+{"version":3,"file":"BaseModel.d.ts","sourceRoot":"","sources":["../../src/models/BaseModel.ts"],"names":[],"mappings":"AAAA,OAAO,QAAQ,EAAE,EAAE,QAAQ,EAAE,MAAM,UAAU,CAAC;AAE9C,MAAM,WAAW,aAAc,SAAQ,QAAQ;IAC7C,SAAS,EAAE,IAAI,CAAC;IAChB,SAAS,EAAE,IAAI,CAAC;CACjB;AAED,eAAO,MAAM,gBAAgB;;;;;;;;;CAG5B,CAAC;AAEF,eAAO,MAAM,iBAAiB,GAAI,QAAQ,QAAQ,CAAC,MAAM,SAsBxD,CAAC"}

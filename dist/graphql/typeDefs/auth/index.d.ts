@@ -1,0 +1,3 @@
+export declare const authTypeDefs = "#graphql\n  # ================================\n  # Auth Types\n  # ================================\n  type AuthPayload {\n    token: String!\n    pengguna: Pengguna!\n  }\n\n  # ================================\n  # Auth Input Types\n  # ================================\n  input RegisterInput {\n    email: String!\n    noHP: String!\n    namaLengkap: String!\n    password: String!\n  }\n\n  input UpdateProfileInput {\n    noHP: String\n    namaLengkap: String\n  }\n";
+export default authTypeDefs;
+//# sourceMappingURL=index.d.ts.map

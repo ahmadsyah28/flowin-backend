@@ -1,0 +1,3 @@
+export declare const riwayatRagihanTypeDefs = "#graphql\n  # ================================\n  # RiwayatRagihan Types\n  # ================================\n  type RiwayatRagihan {\n    id: ID!\n    MeteranId: ID!\n    PenggunaanAir: Float!\n    createdAt: DateTime\n    updatedAt: DateTime\n    # Populated fields\n    meter: Meter\n  }\n\n  # ================================\n  # RiwayatRagihan Queries\n  # ================================\n  extend type Query {\n    riwayatRagihanByMeter(meterId: ID!): [RiwayatRagihan!]!\n  }\n";
+export default riwayatRagihanTypeDefs;
+//# sourceMappingURL=index.d.ts.map

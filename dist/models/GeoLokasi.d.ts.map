@@ -1,0 +1,1 @@
+{"version":3,"file":"GeoLokasi.d.ts","sourceRoot":"","sources":["../../src/models/GeoLokasi.ts"],"names":[],"mappings":"AAAA,OAAO,QAAQ,EAAE,EAAU,KAAK,EAAE,MAAM,UAAU,CAAC;AACnD,OAAO,EACL,aAAa,EAGd,MAAM,aAAa,CAAC;AAErB,MAAM,WAAW,UAAW,SAAQ,aAAa;IAC/C,SAAS,EAAE,KAAK,CAAC,QAAQ,CAAC;IAC1B,QAAQ,EAAE,MAAM,CAAC;IACjB,SAAS,EAAE,MAAM,CAAC;CACnB;AAoBD,eAAO,MAAM,SAAS;;;;;;mBAGrB,CAAC"}

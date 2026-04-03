@@ -1,0 +1,3 @@
+export declare const enumsTypeDefs = "#graphql\n  # ================================\n  # Enums\n  # ================================\n  enum PaymentStatus {\n    PENDING\n    SETTLEMENT\n    CANCEL\n    EXPIRE\n    REFUND\n    CHARGEBACK\n    FRAUD\n  }\n\n  enum JenisLaporan {\n    AIR_TIDAK_MENGALIR\n    AIR_KERUH\n    KEBOCORAN_PIPA\n    METERAN_BERMASALAH\n    KENDALA_LAINNYA\n  }\n\n  enum WorkStatusPelanggan {\n    DITUNDA\n    DITUGASKAN\n    DITINJAU_ADMIN\n    SEDANG_DIKERJAKAN\n    SELESAI\n    DIBATALKAN\n  }\n\n  enum NotifikasiKategori {\n    PEMBAYARAN\n    INFORMASI\n  }\n";
+export default enumsTypeDefs;
+//# sourceMappingURL=index.d.ts.map

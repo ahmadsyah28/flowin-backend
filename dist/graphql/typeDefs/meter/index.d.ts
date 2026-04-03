@@ -1,0 +1,3 @@
+export declare const meterTypeDefs = "#graphql\n  # ================================\n  # Meter Types\n  # ================================\n  type Meter {\n    id: ID!\n    IdKelompokPelanggan: ID!\n    IdKoneksiData: ID!\n    NomorMeteran: String!\n    NomorAkun: String!\n    createdAt: DateTime\n    updatedAt: DateTime\n    # Populated fields\n    koneksiData: KoneksiData\n  }\n\n  # No specific queries or mutations for Meter in current schema\n";
+export default meterTypeDefs;
+//# sourceMappingURL=index.d.ts.map
