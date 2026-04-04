@@ -9,9 +9,9 @@ const cors_1 = __importDefault(require("cors"));
 const server_1 = require("@apollo/server");
 const database_1 = require("./config/database");
 const redis_1 = require("./config/redis");
-const graphql_1 = require("./graphql");
-const typeDefs_1 = require("./graphql/typeDefs");
-const resolvers_1 = __importDefault(require("./graphql/resolvers"));
+const schema_1 = require("./schema");
+const typeDefs_1 = require("./schema/typeDefs");
+const resolvers_1 = __importDefault(require("./schema/resolvers"));
 const middlewares_1 = require("./middlewares");
 const midtransWebhook_1 = __importDefault(require("./webhooks/midtransWebhook"));
 const app = (0, express_1.default)();
@@ -32,7 +32,7 @@ async function initializeServer() {
     app.use((0, cors_1.default)({ origin: config_1.config.corsOrigin }));
     app.use("/api/webhook", express_1.default.json(), midtransWebhook_1.default);
     app.use(config_1.config.graphqlPath, express_1.default.json(), async (req, res) => {
-        const contextValue = await (0, graphql_1.createContext)({ req });
+        const contextValue = await (0, schema_1.createContext)({ req });
         const result = await apolloServer.executeOperation({
             query: req.body.query,
             variables: req.body.variables,

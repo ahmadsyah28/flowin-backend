@@ -1,3 +1,0 @@
-export declare const geoLokasiTypeDefs = "#graphql\n  # ================================\n  # GeoLokasi Types\n  # ================================\n  type GeoLokasi {\n    id: ID!\n    IdLaporan: ID!\n    Latitude: Float!\n    Longitude: Float!\n    createdAt: DateTime\n    updatedAt: DateTime\n  }\n\n  # No specific queries or mutations for GeoLokasi in current schema\n";
-export default geoLokasiTypeDefs;
-//# sourceMappingURL=index.d.ts.map

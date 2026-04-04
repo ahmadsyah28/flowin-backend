@@ -1,3 +1,0 @@
-export declare const notifikasiTypeDefs = "#graphql\n  # ================================\n  # Notifikasi Types\n  # ================================\n  type Notifikasi {\n    id: ID!\n    IdPelanggan: ID!\n    IdAdmin: ID!\n    IdTeknisi: ID!\n    Judul: String!\n    Pesan: String!\n    Kategori: NotifikasiKategori!\n    Link: String\n    createdAt: DateTime\n    updatedAt: DateTime\n  }\n\n  # ================================\n  # Notifikasi Queries\n  # ================================\n  extend type Query {\n    notifikasiByPelanggan(pelangganId: ID): [Notifikasi!]!\n  }\n";
-export default notifikasiTypeDefs;
-//# sourceMappingURL=index.d.ts.map

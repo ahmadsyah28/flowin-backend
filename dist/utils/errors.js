@@ -1,7 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.handleError = exports.serviceUnavailableError = exports.databaseError = exports.internalServerError = exports.emailNotVerifiedError = exports.conflictError = exports.notFoundError = exports.forbiddenError = exports.authenticationError = exports.validationError = exports.badUserInputError = exports.badRequestError = exports.ERROR_CODES = void 0;
-const graphql_1 = require("../graphql");
+const graphql_1 = require("graphql");
 exports.ERROR_CODES = {
     BAD_REQUEST: { code: "BAD_REQUEST", statusCode: 400 },
     BAD_USER_INPUT: { code: "BAD_USER_INPUT", statusCode: 400 },

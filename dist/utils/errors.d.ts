@@ -1,4 +1,4 @@
-import { GraphQLError } from "../graphql";
+import { GraphQLError } from "graphql";
 export declare const ERROR_CODES: {
     readonly BAD_REQUEST: {
         readonly code: "BAD_REQUEST";

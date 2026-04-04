@@ -1,3 +1,0 @@
-export declare const baseTypeDefs = "#graphql\n  # ================================\n  # Base Query and Mutation Types\n  # ================================\n  type Query {\n    # Health check\n    hello: String!\n    dbStatus: String!\n  }\n\n  type Mutation\n\n  # ================================\n  # Auth Mutations\n  # ================================\n  extend type Mutation {\n    register(input: RegisterInput!): AuthPayload!\n    login(email: String!, password: String!): AuthPayload!\n  }\n";
-export default baseTypeDefs;
-//# sourceMappingURL=index.d.ts.map

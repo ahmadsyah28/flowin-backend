@@ -1,7 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.requestLogger = exports.generateRequestId = exports.formatGraphQLError = void 0;
-const graphql_1 = require("../graphql");
+const graphql_1 = require("graphql");
 const config_1 = require("../config");
 const errors_1 = require("../utils/errors");
 const formatGraphQLError = (formattedError, error) => {

@@ -1,4 +1,4 @@
-import { GraphQLFormattedError } from "../graphql";
+import { GraphQLFormattedError } from "graphql";
 interface FormattedErrorResponse extends GraphQLFormattedError {
     extensions: {
         code: string;

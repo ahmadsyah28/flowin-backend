@@ -1,7 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.setupContext = exports.requireAdmin = exports.requireVerification = exports.requireAuth = void 0;
-const graphql_1 = require("../graphql");
+const graphql_1 = require("graphql");
 const auth_1 = require("./auth");
 const Pengguna_1 = require("../models/Pengguna");
 const requireAuth = (context) => {
