@@ -11,8 +11,8 @@ const Meter_1 = require("../models/Meter");
 const KoneksiData_1 = require("../models/KoneksiData");
 const KelompokPelanggan_1 = require("../models/KelompokPelanggan");
 const RiwayatPenggunaan_1 = require("../models/RiwayatPenggunaan");
-const TARGET_USER_ID = "699aaa90b03afd83f892ec54";
-const TARGET_KONEKSI_DATA_ID = "69a137ba4bb449a9a8f55c48";
+const TARGET_USER_ID = "69d0cb64ec09d8618dfb3c63";
+const TARGET_KONEKSI_DATA_ID = "69d0ccabec09d8618dfb3c71";
 function randomDailyUsage(min = 150, max = 350) {
     return Math.round((Math.random() * (max - min) + min) * 10) / 10;
 }

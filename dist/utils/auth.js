@@ -9,9 +9,10 @@ const config_1 = require("../config");
 const errors_1 = require("./errors");
 const generateToken = (pengguna) => {
     const payload = {
-        id: pengguna._id.toString(),
+        userId: pengguna._id.toString(),
         email: pengguna.email,
-        isVerified: pengguna.isVerified,
+        role: "users",
+        type: "access",
     };
     return jsonwebtoken_1.default.sign(payload, config_1.config.jwt.secret, {
         expiresIn: config_1.config.jwt.expiresIn,

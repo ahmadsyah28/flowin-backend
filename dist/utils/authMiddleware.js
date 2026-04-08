@@ -42,7 +42,7 @@ const setupContext = async (req) => {
         const token = authHeader.substring(7);
         try {
             const payload = (0, auth_1.verifyToken)(token);
-            const user = await Pengguna_1.Pengguna.findById(payload.id);
+            const user = await Pengguna_1.Pengguna.findById(payload.userId);
             if (user) {
                 context.user = user;
                 context.isAuthenticated = true;

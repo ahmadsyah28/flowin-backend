@@ -44,7 +44,7 @@ const setupContext = async (req) => {
     if (token) {
         try {
             const payload = (0, auth_1.verifyToken)(token);
-            const user = await Pengguna_1.Pengguna.findById(payload.id);
+            const user = await Pengguna_1.Pengguna.findById(payload.userId);
             if (user) {
                 context.user = user;
                 context.isAuthenticated = true;

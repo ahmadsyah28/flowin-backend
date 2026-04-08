@@ -9,7 +9,7 @@ dotenv_1.default.config();
 function validateEnvVars() {
     const requiredVars = [
         "MONGODB_URI",
-        "JWT_SECRET",
+        "JWT_ACCESS_SECRET",
         "UPSTASH_REDIS_REST_URL",
         "UPSTASH_REDIS_REST_TOKEN",
     ];
@@ -24,9 +24,9 @@ function validateEnvVars() {
         process.exit(1);
     }
     if (process.env.NODE_ENV === "production") {
-        const jwtSecret = process.env.JWT_SECRET || "";
+        const jwtSecret = process.env.JWT_ACCESS_SECRET || "";
         if (jwtSecret.length < 32) {
-            console.error("❌ JWT_SECRET must be at least 32 characters in production!");
+            console.error("❌ JWT_ACCESS_SECRET must be at least 32 characters in production!");
             console.error("   Generate strong secret using: node -e \"console.log(require('crypto').randomBytes(64).toString('hex'))\"\n");
             process.exit(1);
         }
@@ -42,7 +42,7 @@ exports.config = {
         token: process.env.UPSTASH_REDIS_REST_TOKEN,
     },
     jwt: {
-        secret: process.env.JWT_SECRET,
+        secret: process.env.JWT_ACCESS_SECRET,
         expiresIn: process.env.JWT_EXPIRES_IN || "7d",
     },
     google: {

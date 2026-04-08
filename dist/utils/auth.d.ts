@@ -1,8 +1,9 @@
 import { IPengguna } from "../models/Pengguna";
 export interface JWTPayload {
-    id: string;
+    userId: string;
     email: string;
-    isVerified: boolean;
+    role: string;
+    type: string;
 }
 export declare const generateToken: (pengguna: IPengguna) => string;
 export declare const verifyToken: (token: string) => JWTPayload;
