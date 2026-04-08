@@ -51,23 +51,27 @@ async function initializeServer(): Promise<void> {
   app.use("/api/webhook", express.json(), webhookRouter);
 
   // 6. GraphQL middleware
-  app.use(config.graphqlPath, express.json(), async (req: Request, res: Response) => {
-    const contextValue = await createContext({ req });
-    const result = await apolloServer!.executeOperation(
-      {
-        query: req.body.query,
-        variables: req.body.variables,
-        operationName: req.body.operationName,
-      },
-      { contextValue },
-    );
+  app.use(
+    config.graphqlPath,
+    express.json(),
+    async (req: Request, res: Response) => {
+      const contextValue = await createContext({ req });
+      const result = await apolloServer!.executeOperation(
+        {
+          query: req.body.query,
+          variables: req.body.variables,
+          operationName: req.body.operationName,
+        },
+        { contextValue },
+      );
 
-    if (result.body.kind === "single") {
-      res.json(result.body.singleResult);
-    } else {
-      res.json({ errors: [{ message: "Streaming not supported" }] });
-    }
-  });
+      if (result.body.kind === "single") {
+        res.json(result.body.singleResult);
+      } else {
+        res.json({ errors: [{ message: "Streaming not supported" }] });
+      }
+    },
+  );
 
   isInitialized = true;
 

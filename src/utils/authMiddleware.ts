@@ -57,7 +57,7 @@ export const setupContext = async (req: any): Promise<GraphQLContext> => {
 
     try {
       const payload = verifyToken(token);
-      const user = await Pengguna.findById(payload.id);
+      const user = await Pengguna.findById(payload.userId);
 
       if (user) {
         context.user = user;

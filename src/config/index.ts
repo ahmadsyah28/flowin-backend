@@ -70,7 +70,7 @@ export const config = {
 
   // JWT
   jwt: {
-    secret: process.env.JWT_SECRET!,
+    secret: process.env.JWT_ACCESS_SECRET!,
     expiresIn: process.env.JWT_EXPIRES_IN || "7d",
     // Future: tambahkan refresh token config
     // refreshSecret: process.env.JWT_REFRESH_SECRET || process.env.JWT_SECRET!,

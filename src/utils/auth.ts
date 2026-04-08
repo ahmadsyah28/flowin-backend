@@ -4,16 +4,18 @@ import { config } from "@/config";
 import { authenticationError } from "./errors";
 
 export interface JWTPayload {
-  id: string;
+  userId: string;
   email: string;
-  isVerified: boolean;
+  role: string;
+  type: string;
 }
 
 export const generateToken = (pengguna: IPengguna): string => {
   const payload: JWTPayload = {
-    id: pengguna._id.toString(),
+    userId: pengguna._id.toString(),
     email: pengguna.email,
-    isVerified: pengguna.isVerified,
+    role: "users",
+    type: "access",
   };
 
   return jwt.sign(payload, config.jwt.secret, {
