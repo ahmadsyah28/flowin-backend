@@ -32,8 +32,8 @@ import { RiwayatPenggunaan } from "@/models/RiwayatPenggunaan";
 // KONFIGURASI
 // ==========================================
 
-const TARGET_USER_ID = "699aaa90b03afd83f892ec54";
-const TARGET_KONEKSI_DATA_ID = "69a137ba4bb449a9a8f55c48";
+const TARGET_USER_ID = "69d0cb64ec09d8618dfb3c63";
+const TARGET_KONEKSI_DATA_ID = "69d0ccabec09d8618dfb3c71";
 
 // ==========================================
 // HELPER
