@@ -1,6 +1,8 @@
 import { Types } from "mongoose";
 import { KoneksiData, IKoneksiData } from "@/models/KoneksiData";
-import { StatusPengajuan } from "@/enums";
+import { RAB } from "@/models/RAB";
+import { Meter } from "@/models/Meter";
+import { StatusPengajuan, EnumPaymentStatus } from "@/enums";
 
 // Input interfaces
 export interface CreateKoneksiDataInput {
@@ -40,6 +42,11 @@ export interface StatusPengajuanResponse {
   alasanPenolakan: string | null;
   tanggalVerifikasi: Date | null;
   canSubmit: boolean;
+  subTahap: string | null;
+  jumlahRAB: number | null;
+  snapRedirectUrl: string | null;
+  urlRab: string | null;
+  catatanRab: string | null;
 }
 
 export class KoneksiDataService {
@@ -198,6 +205,7 @@ export class KoneksiDataService {
 
   /**
    * Cek status pengajuan koneksi
+   * Sub-tahap APPROVED: SURVEI → MENUNGGU_PEMBAYARAN_RAB → INSTALASI → AKTIF
    */
   static async cekStatusPengajuan(
     userId: string | Types.ObjectId,
@@ -214,6 +222,11 @@ export class KoneksiDataService {
           alasanPenolakan: null,
           tanggalVerifikasi: null,
           canSubmit: true,
+          subTahap: null,
+          jumlahRAB: null,
+          snapRedirectUrl: null,
+          urlRab: null,
+          catatanRab: null,
         };
       }
 
@@ -221,13 +234,54 @@ export class KoneksiDataService {
         koneksiData.StatusPengajuan === StatusPengajuan.REJECTED;
 
       let message = "";
+      let subTahap: string | null = null;
+      let jumlahRAB: number | null = null;
+      let snapRedirectUrl: string | null = null;
+      let urlRab: string | null = null;
+      let catatanRab: string | null = null;
+
       switch (koneksiData.StatusPengajuan) {
         case StatusPengajuan.PENDING:
           message = "Pengajuan Anda sedang dalam proses verifikasi";
           break;
-        case StatusPengajuan.APPROVED:
-          message = "Pengajuan Anda sudah disetujui";
+
+        case StatusPengajuan.APPROVED: {
+          // Cek sub-tahap berdasarkan data di koleksi lain
+          const meter = await Meter.findOne({ IdKoneksiData: koneksiData._id });
+
+          if (meter) {
+            // Sudah ada meteran → pelanggan aktif
+            subTahap = "AKTIF";
+            message = "Selamat! Anda sudah menjadi pelanggan PDAM aktif";
+          } else {
+            const rab = await RAB.findOne({ idKoneksiData: koneksiData._id });
+
+            if (!rab) {
+              // Belum ada RAB → masih survei
+              subTahap = "SURVEI";
+              message =
+                "Dokumen disetujui. Teknisi akan melakukan survei ke lokasi Anda";
+            } else {
+              urlRab = rab.urlRab || null;
+              catatanRab = rab.catatan || null;
+              jumlahRAB = rab.totalBiaya || null;
+
+              if (rab.statusPembayaran === EnumPaymentStatus.SETTLEMENT) {
+                // Sudah bayar → instalasi
+                subTahap = "INSTALASI";
+                message =
+                  "Pembayaran RAB diterima. Teknisi sedang melakukan instalasi";
+              } else {
+                // Ada RAB tapi belum bayar
+                subTahap = "MENUNGGU_PEMBAYARAN_RAB";
+                snapRedirectUrl = rab.paymentUrl || null;
+                message = `RAB pemasangan tersedia. Silakan lakukan pembayaran sebesar Rp ${rab.totalBiaya?.toLocaleString("id-ID") ?? 0}`;
+              }
+            }
+          }
           break;
+        }
+
         case StatusPengajuan.REJECTED:
           message = `Pengajuan Anda ditolak. Alasan: ${koneksiData.AlasanPenolakan || "Tidak ada alasan"}`;
           break;
@@ -240,6 +294,11 @@ export class KoneksiDataService {
         alasanPenolakan: koneksiData.AlasanPenolakan || null,
         tanggalVerifikasi: koneksiData.TanggalVerifikasi || null,
         canSubmit,
+        subTahap,
+        jumlahRAB,
+        snapRedirectUrl,
+        urlRab,
+        catatanRab,
       };
     } catch (error: any) {
       return {
@@ -249,6 +308,11 @@ export class KoneksiDataService {
         alasanPenolakan: null,
         tanggalVerifikasi: null,
         canSubmit: false,
+        subTahap: null,
+        jumlahRAB: null,
+        snapRedirectUrl: null,
+        urlRab: null,
+        catatanRab: null,
       };
     }
   }

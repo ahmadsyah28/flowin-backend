@@ -8,6 +8,7 @@ import { geoLokasiTypeDefs } from "./GeoLokasi";
 import { riwayatPenggunaanTypeDefs } from "./RiwayatPenggunaan";
 import { pembayaranTypeDefs } from "./Pembayaran";
 import { monitoringTypeDefs } from "./Monitoring";
+import { rabTypeDefs } from "./RAB";
 
 export const typeDefs = `
   # Scalar types untuk tipe data khusus
@@ -42,4 +43,5 @@ export const typeDefs = `
   ${riwayatPenggunaanTypeDefs}
   ${pembayaranTypeDefs}
   ${monitoringTypeDefs}
+  ${rabTypeDefs}
 `;

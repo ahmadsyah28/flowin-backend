@@ -7,3 +7,4 @@ export * from "./NotifikasiService";
 export * from "./TagihanService";
 export * from "./PembayaranService";
 export * from "./MonitoringService";
+export * from "./RABService";

@@ -1,5 +1,6 @@
 import { Router, Request, Response } from "express";
 import { PembayaranService } from "@/services/PembayaranService";
+import { RABService } from "@/services/RABService";
 
 const webhookRouter = Router();
 
@@ -12,22 +13,32 @@ const webhookRouter = Router();
  * Flow:
  * 1. User bayar di Midtrans Snap
  * 2. Midtrans kirim notifikasi ke endpoint ini
- * 3. Kita verifikasi & update status pembayaran + tagihan
- * 4. Kirim notifikasi ke user
+ * 3. Cek prefix order_id: "RAB-" → RABService, lainnya → PembayaranService
+ * 4. Verifikasi & update status pembayaran
+ * 5. Kirim notifikasi ke user
  */
 webhookRouter.post(
   "/midtrans",
   async (req: Request, res: Response): Promise<void> => {
     try {
-      console.log("📩 Midtrans webhook received:", {
-        order_id: req.body?.order_id,
-        transaction_status: req.body?.transaction_status,
-        payment_type: req.body?.payment_type,
-      });
+      const orderId = req.body?.order_id || "";
+      const isRABPayment = orderId.startsWith("RAB-");
 
-      const result = await PembayaranService.handleMidtransNotification(
-        req.body,
+      console.log(
+        `📩 Midtrans webhook received [${isRABPayment ? "RAB" : "TAGIHAN"}]:`,
+        {
+          order_id: orderId,
+          transaction_status: req.body?.transaction_status,
+          payment_type: req.body?.payment_type,
+        },
       );
+
+      let result;
+      if (isRABPayment) {
+        result = await RABService.handleRABNotification(req.body);
+      } else {
+        result = await PembayaranService.handleMidtransNotification(req.body);
+      }
 
       if (result.success) {
         console.log(

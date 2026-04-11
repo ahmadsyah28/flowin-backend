@@ -61,6 +61,11 @@ export const koneksiDataTypeDefs = `
     alasanPenolakan: String
     tanggalVerifikasi: Date
     canSubmit: Boolean!
+    subTahap: String
+    jumlahRAB: Float
+    snapRedirectUrl: String
+    urlRab: String
+    catatanRab: String
   }
 
   # Response untuk operasi koneksi data

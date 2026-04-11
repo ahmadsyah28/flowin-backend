@@ -15,12 +15,14 @@ export {
   KategoriKelompok,
   kelompokPelangganSeed,
 } from "./KelompokPelanggan";
+export { RAB, IRAB, IRABDocument } from "./RAB";
 export { IBaseDocument } from "./BaseModel";
 
 // Export all models as a collection for easy access
 import { Pengguna } from "./Pengguna";
 import { KoneksiData } from "./KoneksiData";
 import { Meter } from "./Meter";
+import { RAB } from "./RAB";
 import { Tagihan } from "./Tagihan";
 import { RiwayatPenggunaan } from "./RiwayatPenggunaan";
 import { Laporan } from "./Laporan";
@@ -40,6 +42,7 @@ export const models = {
   Notifikasi,
   Pembayaran,
   KelompokPelanggan,
+  RAB,
 };
 
 export default models;

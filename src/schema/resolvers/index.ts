@@ -8,6 +8,7 @@ import { notifikasiResolvers } from "./Notifikasi";
 import { tagihanResolvers } from "./Tagihan";
 import { pembayaranResolvers } from "./Pembayaran";
 import { monitoringResolvers } from "./Monitoring";
+import { rabResolvers } from "./RAB";
 
 const resolvers: IResolvers = {
   // Field resolvers
@@ -64,6 +65,10 @@ const resolvers: IResolvers = {
     ...pembayaranResolvers.StatusPembayaran,
   },
 
+  RAB: {
+    ...rabResolvers.RAB,
+  },
+
   Query: {
     hello: () => "Hello, from GraphQL server!",
 
@@ -93,6 +98,9 @@ const resolvers: IResolvers = {
 
     // Monitoring queries
     ...monitoringResolvers.Query,
+
+    // RAB queries
+    ...rabResolvers.Query,
   },
 
   Mutation: {
@@ -112,6 +120,9 @@ const resolvers: IResolvers = {
 
     // Pembayaran mutations
     ...pembayaranResolvers.Mutation,
+
+    // RAB mutations
+    ...rabResolvers.Mutation,
   },
 
   Subscription: {
