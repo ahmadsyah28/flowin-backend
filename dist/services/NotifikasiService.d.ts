@@ -1,6 +1,6 @@
 import { Types } from "mongoose";
-import { INotifikasi } from "@/models/Notifikasi";
-import { EnumNotifikasiKategori } from "@/enums";
+import { INotifikasi } from "../models/Notifikasi";
+import { EnumNotifikasiKategori } from "../enums";
 export interface NotifikasiFilterInput {
     kategori?: EnumNotifikasiKategori;
 }

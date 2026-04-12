@@ -5,11 +5,11 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.RABService = void 0;
 const midtrans_client_1 = __importDefault(require("midtrans-client"));
-const RAB_1 = require("@/models/RAB");
-const KoneksiData_1 = require("@/models/KoneksiData");
-const Pengguna_1 = require("@/models/Pengguna");
-const Notifikasi_1 = require("@/models/Notifikasi");
-const enums_1 = require("@/enums");
+const RAB_1 = require("../models/RAB");
+const KoneksiData_1 = require("../models/KoneksiData");
+const Pengguna_1 = require("../models/Pengguna");
+const Notifikasi_1 = require("../models/Notifikasi");
+const enums_1 = require("../enums");
 const snap = new midtrans_client_1.default.Snap({
     isProduction: process.env.MIDTRANS_IS_PRODUCTION === "true",
     serverKey: process.env.MIDTRANS_SERVER_KEY || "",

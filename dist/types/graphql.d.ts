@@ -1,5 +1,5 @@
-import { IPengguna, IKoneksiData, ITagihan, IMeter, IGeoLokasi, INotifikasi, IRiwayatPenggunaan } from "@/models";
-import { EnumJenisLaporan, EnumWorkStatusPelanggan } from "@/enums";
+import { IPengguna, IKoneksiData, ITagihan, IMeter, IGeoLokasi, INotifikasi, IRiwayatPenggunaan } from "../models";
+import { EnumJenisLaporan, EnumWorkStatusPelanggan } from "../enums";
 export interface Pengguna extends Omit<IPengguna, "password" | "token"> {
     id: string;
 }

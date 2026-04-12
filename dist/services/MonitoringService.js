@@ -2,10 +2,10 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.MonitoringService = void 0;
 const mongoose_1 = require("mongoose");
-const models_1 = require("@/models");
-const Meter_1 = require("@/models/Meter");
-const KelompokPelanggan_1 = require("@/models/KelompokPelanggan");
-const redis_1 = require("@/config/redis");
+const models_1 = require("../models");
+const Meter_1 = require("../models/Meter");
+const KelompokPelanggan_1 = require("../models/KelompokPelanggan");
+const redis_1 = require("../config/redis");
 function getDaysInMonth(year, month) {
     return new Date(year, month, 0).getDate();
 }

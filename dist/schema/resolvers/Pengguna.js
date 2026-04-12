@@ -1,8 +1,8 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.penggunaResolvers = void 0;
-const middlewares_1 = require("@/middlewares");
-const PenggunaService_1 = require("@/services/PenggunaService");
+const middlewares_1 = require("../../middlewares");
+const PenggunaService_1 = require("../../services/PenggunaService");
 exports.penggunaResolvers = {
     Query: {
         me: async (_, __, context) => {

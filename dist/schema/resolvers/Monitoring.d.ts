@@ -1,5 +1,5 @@
-import { GraphQLContext } from "@/types";
-import { MonitoringDashboardResponse, MonthlyUsageData } from "@/services/MonitoringService";
+import { GraphQLContext } from "../../types";
+import { MonitoringDashboardResponse, MonthlyUsageData } from "../../services/MonitoringService";
 export declare const monitoringResolvers: {
     Query: {
         monitoringDashboard: (_: any, { meteranId }: {
@@ -31,13 +31,13 @@ export declare const monitoringResolvers: {
                     nomorMeteran: string;
                     nomorAkun: string;
                 };
-                latestReading: import("@/services/MonitoringService").LatestReading | null;
+                latestReading: import("../../services/MonitoringService").LatestReading | null;
                 totalKeseluruhan: number;
                 rataRataBulanan: number;
-                perbandingan: import("@/services/MonitoringService").UsageComparison | null;
-                prediksi: import("@/services/MonitoringService").UsagePrediction | null;
-                evaluasi: import("@/services/MonitoringService").UsageEvaluation;
-                estimasiTagihan: import("@/services/MonitoringService").BillingEstimate | null;
+                perbandingan: import("../../services/MonitoringService").UsageComparison | null;
+                prediksi: import("../../services/MonitoringService").UsagePrediction | null;
+                evaluasi: import("../../services/MonitoringService").UsageEvaluation;
+                estimasiTagihan: import("../../services/MonitoringService").BillingEstimate | null;
                 chartHarian: {
                     tanggal: string;
                     liter: number;

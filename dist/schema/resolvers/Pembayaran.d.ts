@@ -1,5 +1,5 @@
-import { GraphQLContext } from "@/types";
-import { EnumStatusPembayaran } from "@/models/Pembayaran";
+import { GraphQLContext } from "../../types";
+import { EnumStatusPembayaran } from "../../models/Pembayaran";
 export declare const pembayaranResolvers: {
     StatusPembayaran: {
         Pending: EnumStatusPembayaran;
@@ -12,18 +12,18 @@ export declare const pembayaranResolvers: {
         pembayaranList: (_: any, { limit, offset }: {
             limit?: number;
             offset?: number;
-        }, context: GraphQLContext) => Promise<import("@/services/PembayaranService").PembayaranListResponse>;
+        }, context: GraphQLContext) => Promise<import("../../services/PembayaranService").PembayaranListResponse>;
         pembayaran: (_: any, { id }: {
             id: string;
-        }, context: GraphQLContext) => Promise<import("@/services/PembayaranService").PembayaranResponse>;
+        }, context: GraphQLContext) => Promise<import("../../services/PembayaranService").PembayaranResponse>;
         cekStatusPembayaran: (_: any, { orderId }: {
             orderId: string;
-        }, context: GraphQLContext) => Promise<import("@/services/PembayaranService").PembayaranResponse>;
+        }, context: GraphQLContext) => Promise<import("../../services/PembayaranService").PembayaranResponse>;
     };
     Mutation: {
         buatPembayaran: (_: any, { tagihanId }: {
             tagihanId: string;
-        }, context: GraphQLContext) => Promise<import("@/services/PembayaranService").CreatePaymentResponse>;
+        }, context: GraphQLContext) => Promise<import("../../services/PembayaranService").CreatePaymentResponse>;
     };
     Pembayaran: {
         id: (parent: any) => any;

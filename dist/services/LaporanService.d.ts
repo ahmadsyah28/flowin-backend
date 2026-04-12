@@ -1,6 +1,6 @@
 import { Types } from "mongoose";
-import { ILaporan } from "@/models/Laporan";
-import { EnumJenisLaporan, EnumWorkStatusPelanggan } from "@/enums";
+import { ILaporan } from "../models/Laporan";
+import { EnumJenisLaporan, EnumWorkStatusPelanggan } from "../enums";
 export interface CreateLaporanInput {
     namaLaporan: string;
     masalah: string;

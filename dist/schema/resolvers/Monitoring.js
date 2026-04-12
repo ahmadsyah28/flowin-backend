@@ -1,8 +1,8 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.monitoringResolvers = void 0;
-const authMiddleware_1 = require("@/utils/authMiddleware");
-const MonitoringService_1 = require("@/services/MonitoringService");
+const authMiddleware_1 = require("../../utils/authMiddleware");
+const MonitoringService_1 = require("../../services/MonitoringService");
 function convertDailyDataToArray(dataHarian) {
     return Object.entries(dataHarian)
         .map(([tanggal, liter]) => ({ tanggal, liter }))

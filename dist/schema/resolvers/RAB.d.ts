@@ -1,7 +1,7 @@
-import { GraphQLContext } from "@/types";
+import { GraphQLContext } from "../../types";
 export declare const rabResolvers: {
     Query: {
-        getMyRAB: (_: any, __: any, context: GraphQLContext) => Promise<import("@/services/RABService").RABResponse>;
+        getMyRAB: (_: any, __: any, context: GraphQLContext) => Promise<import("../../services/RABService").RABResponse>;
     };
     Mutation: {
         createRABPayment: (_: any, __: any, context: GraphQLContext) => Promise<{

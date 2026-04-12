@@ -1,6 +1,6 @@
-import { GraphQLContext } from "@/types";
-import { EnumJenisLaporan, EnumWorkStatusPelanggan } from "@/enums";
-import { CreateLaporanInput, UpdateLaporanInput, LaporanFilterInput } from "@/services/LaporanService";
+import { GraphQLContext } from "../../types";
+import { EnumJenisLaporan, EnumWorkStatusPelanggan } from "../../enums";
+import { CreateLaporanInput, UpdateLaporanInput, LaporanFilterInput } from "../../services/LaporanService";
 export declare const laporanResolvers: {
     JenisLaporan: {
         AIR_TIDAK_MENGALIR: EnumJenisLaporan;
@@ -20,23 +20,23 @@ export declare const laporanResolvers: {
     Query: {
         laporanList: (_: any, { filter }: {
             filter?: LaporanFilterInput;
-        }, context: GraphQLContext) => Promise<import("@/services/LaporanService").LaporanListResponse>;
+        }, context: GraphQLContext) => Promise<import("../../services/LaporanService").LaporanListResponse>;
         laporanById: (_: any, { id }: {
             id: string;
-        }) => Promise<import("@/services/LaporanService").LaporanResponse>;
-        laporanAktif: (_: any, __: any, context: GraphQLContext) => Promise<import("@/services/LaporanService").LaporanListResponse>;
+        }) => Promise<import("../../services/LaporanService").LaporanResponse>;
+        laporanAktif: (_: any, __: any, context: GraphQLContext) => Promise<import("../../services/LaporanService").LaporanListResponse>;
     };
     Mutation: {
         createLaporan: (_: any, { input }: {
             input: CreateLaporanInput;
-        }, context: GraphQLContext) => Promise<import("@/services/LaporanService").LaporanResponse>;
+        }, context: GraphQLContext) => Promise<import("../../services/LaporanService").LaporanResponse>;
         updateLaporan: (_: any, { id, input }: {
             id: string;
             input: UpdateLaporanInput;
-        }, context: GraphQLContext) => Promise<import("@/services/LaporanService").LaporanResponse>;
+        }, context: GraphQLContext) => Promise<import("../../services/LaporanService").LaporanResponse>;
         batalkanLaporan: (_: any, { id }: {
             id: string;
-        }, context: GraphQLContext) => Promise<import("@/services/LaporanService").LaporanResponse>;
+        }, context: GraphQLContext) => Promise<import("../../services/LaporanService").LaporanResponse>;
     };
     Laporan: {
         id: (parent: any) => any;

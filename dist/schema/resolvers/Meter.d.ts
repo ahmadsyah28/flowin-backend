@@ -1,13 +1,13 @@
-import { GraphQLContext } from "@/types";
+import { GraphQLContext } from "../../types";
 export declare const meterResolvers: {
     Query: {
-        meterList: (_: any, __: any, context: GraphQLContext) => Promise<import("@/services/MeterService").MeterListResponse>;
+        meterList: (_: any, __: any, context: GraphQLContext) => Promise<import("../../services/MeterService").MeterListResponse>;
         meterById: (_: any, { id }: {
             id: string;
-        }) => Promise<import("@/services/MeterService").MeterResponse>;
+        }) => Promise<import("../../services/MeterService").MeterResponse>;
         meterByNomor: (_: any, { nomorMeteran }: {
             nomorMeteran: string;
-        }) => Promise<import("@/services/MeterService").MeterResponse>;
+        }) => Promise<import("../../services/MeterService").MeterResponse>;
     };
     Meter: {
         id: (parent: any) => any;

@@ -1,6 +1,6 @@
 import { Types } from "mongoose";
-import { ITagihan } from "@/models/Tagihan";
-import { EnumPaymentStatus } from "@/enums";
+import { ITagihan } from "../models/Tagihan";
+import { EnumPaymentStatus } from "../enums";
 export interface TagihanFilterInput {
     idMeteran?: string;
     periode?: string;

@@ -1,5 +1,5 @@
 import { Types } from "mongoose";
-import { IRABDocument } from "@/models/RAB";
+import { IRABDocument } from "../models/RAB";
 export interface RABResponse {
     success: boolean;
     message: string;

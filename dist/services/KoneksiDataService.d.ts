@@ -1,6 +1,6 @@
 import { Types } from "mongoose";
-import { IKoneksiData } from "@/models/KoneksiData";
-import { StatusPengajuan } from "@/enums";
+import { IKoneksiData } from "../models/KoneksiData";
+import { StatusPengajuan } from "../enums";
 export interface CreateKoneksiDataInput {
     nik: string;
     nikUrl: string;

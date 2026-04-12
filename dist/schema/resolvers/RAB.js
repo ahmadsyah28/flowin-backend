@@ -1,8 +1,8 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.rabResolvers = void 0;
-const authMiddleware_1 = require("@/utils/authMiddleware");
-const RABService_1 = require("@/services/RABService");
+const authMiddleware_1 = require("../../utils/authMiddleware");
+const RABService_1 = require("../../services/RABService");
 exports.rabResolvers = {
     Query: {
         getMyRAB: async (_, __, context) => {

@@ -1,8 +1,8 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.koneksiDataResolvers = void 0;
-const authMiddleware_1 = require("@/utils/authMiddleware");
-const KoneksiDataService_1 = require("@/services/KoneksiDataService");
+const authMiddleware_1 = require("../../utils/authMiddleware");
+const KoneksiDataService_1 = require("../../services/KoneksiDataService");
 exports.koneksiDataResolvers = {
     Query: {
         koneksiData: async (_, __, context) => {

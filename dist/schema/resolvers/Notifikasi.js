@@ -1,8 +1,8 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.notifikasiResolvers = void 0;
-const authMiddleware_1 = require("@/utils/authMiddleware");
-const NotifikasiService_1 = require("@/services/NotifikasiService");
+const authMiddleware_1 = require("../../utils/authMiddleware");
+const NotifikasiService_1 = require("../../services/NotifikasiService");
 exports.notifikasiResolvers = {
     Query: {
         notifikasiList: async (_, { filter }, context) => {

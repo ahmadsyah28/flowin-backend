@@ -1,10 +1,10 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.TagihanService = void 0;
-const Tagihan_1 = require("@/models/Tagihan");
-const Meter_1 = require("@/models/Meter");
-const KoneksiData_1 = require("@/models/KoneksiData");
-const enums_1 = require("@/enums");
+const Tagihan_1 = require("../models/Tagihan");
+const Meter_1 = require("../models/Meter");
+const KoneksiData_1 = require("../models/KoneksiData");
+const enums_1 = require("../enums");
 class TagihanService {
     static async getUserMeterIds(userId) {
         const koneksiData = await KoneksiData_1.KoneksiData.findOne({ IdPelanggan: userId });

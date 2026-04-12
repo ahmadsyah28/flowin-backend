@@ -1,9 +1,9 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.laporanResolvers = void 0;
-const authMiddleware_1 = require("@/utils/authMiddleware");
-const enums_1 = require("@/enums");
-const LaporanService_1 = require("@/services/LaporanService");
+const authMiddleware_1 = require("../../utils/authMiddleware");
+const enums_1 = require("../../enums");
+const LaporanService_1 = require("../../services/LaporanService");
 exports.laporanResolvers = {
     JenisLaporan: {
         AIR_TIDAK_MENGALIR: enums_1.EnumJenisLaporan.AIR_TIDAK_MENGALIR,

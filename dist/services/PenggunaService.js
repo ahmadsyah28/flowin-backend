@@ -1,9 +1,9 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.PenggunaService = void 0;
-const Pengguna_1 = require("@/models/Pengguna");
-const auth_1 = require("@/utils/auth");
-const googleAuth_1 = require("@/utils/googleAuth");
+const Pengguna_1 = require("../models/Pengguna");
+const auth_1 = require("../utils/auth");
+const googleAuth_1 = require("../utils/googleAuth");
 const sanitizeUserResponse = (user) => {
     const userResponse = user.toObject();
     userResponse.password = undefined;

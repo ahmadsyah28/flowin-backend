@@ -35,7 +35,7 @@ var __importStar = (this && this.__importStar) || (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.RAB = void 0;
 const mongoose_1 = __importStar(require("mongoose"));
-const enums_1 = require("@/enums");
+const enums_1 = require("../enums");
 const rabSchema = new mongoose_1.Schema({
     idKoneksiData: {
         type: mongoose_1.Schema.Types.ObjectId,

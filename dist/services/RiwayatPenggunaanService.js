@@ -1,7 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.RiwayatPenggunaanService = void 0;
-const RiwayatPenggunaan_1 = require("@/models/RiwayatPenggunaan");
+const RiwayatPenggunaan_1 = require("../models/RiwayatPenggunaan");
 class RiwayatPenggunaanService {
     static async getRiwayatPenggunaan(meteranId) {
         try {

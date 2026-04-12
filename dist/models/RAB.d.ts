@@ -1,5 +1,5 @@
 import mongoose, { Document, Types } from "mongoose";
-import { EnumPaymentStatus } from "@/enums";
+import { EnumPaymentStatus } from "../enums";
 export interface IRAB {
     idKoneksiData: Types.ObjectId;
     totalBiaya?: number | null;

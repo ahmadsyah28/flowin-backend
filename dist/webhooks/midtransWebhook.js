@@ -1,8 +1,8 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = require("express");
-const PembayaranService_1 = require("@/services/PembayaranService");
-const RABService_1 = require("@/services/RABService");
+const PembayaranService_1 = require("../services/PembayaranService");
+const RABService_1 = require("../services/RABService");
 const webhookRouter = (0, express_1.Router)();
 webhookRouter.post("/midtrans", async (req, res) => {
     try {
