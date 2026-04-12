@@ -143,7 +143,7 @@ export class KoneksiDataService {
         if (existing.StatusPengajuan === StatusPengajuan.APPROVED) {
           return {
             success: false,
-            message: "Pengajuan Anda sudah disetujui. Koneksi air sudah aktif.",
+            message: "Pengajuan Anda sudah disetujui. Teknisi sedang melakukan survey dan menentukan biaya instalasi.",
             data: null,
           };
         }
