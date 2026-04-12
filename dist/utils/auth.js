@@ -5,7 +5,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.verifyEmailToken = exports.generateVerificationToken = exports.verifyToken = exports.generateToken = void 0;
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
-const config_1 = require("../config");
+const config_1 = require("@/config");
 const errors_1 = require("./errors");
 const generateToken = (pengguna) => {
     const payload = {

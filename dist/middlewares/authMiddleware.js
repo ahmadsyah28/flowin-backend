@@ -1,9 +1,9 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.setupContext = exports.requireAdmin = exports.requireVerification = exports.requireAuth = void 0;
-const auth_1 = require("../utils/auth");
-const Pengguna_1 = require("../models/Pengguna");
-const errors_1 = require("../utils/errors");
+const auth_1 = require("@/utils/auth");
+const Pengguna_1 = require("@/models/Pengguna");
+const errors_1 = require("@/utils/errors");
 const requireAuth = (context) => {
     if (!context.isAuthenticated || !context.user) {
         throw (0, errors_1.authenticationError)("Authentication diperlukan untuk mengakses resource ini");

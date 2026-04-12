@@ -1,6 +1,6 @@
 import mongoose, { Types } from "mongoose";
 import { IBaseDocument } from "./BaseModel";
-import { StatusPengajuan } from "../enums";
+import { StatusPengajuan } from "@/enums";
 export interface IKoneksiData extends IBaseDocument {
     IdPelanggan: Types.ObjectId;
     StatusPengajuan: StatusPengajuan;

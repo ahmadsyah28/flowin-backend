@@ -2,7 +2,7 @@ export declare const riwayatPenggunaanResolvers: {
     Query: {
         riwayatPenggunaan: (_: any, { meteranId }: {
             meteranId: string;
-        }) => Promise<import("../../services/RiwayatPenggunaanService").RiwayatPenggunaanListResponse>;
+        }) => Promise<import("@/services/RiwayatPenggunaanService").RiwayatPenggunaanListResponse>;
     };
     RiwayatPenggunaan: {
         id: (parent: any) => any;

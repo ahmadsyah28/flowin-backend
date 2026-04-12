@@ -1,8 +1,10 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.KoneksiDataService = void 0;
-const KoneksiData_1 = require("../models/KoneksiData");
-const enums_1 = require("../enums");
+const KoneksiData_1 = require("@/models/KoneksiData");
+const RAB_1 = require("@/models/RAB");
+const Meter_1 = require("@/models/Meter");
+const enums_1 = require("@/enums");
 class KoneksiDataService {
     static async getKoneksiData(userId) {
         try {
@@ -68,7 +70,7 @@ class KoneksiDataService {
                 if (existing.StatusPengajuan === enums_1.StatusPengajuan.APPROVED) {
                     return {
                         success: false,
-                        message: "Pengajuan Anda sudah disetujui. Koneksi air sudah aktif.",
+                        message: "Pengajuan Anda sudah disetujui. Teknisi sedang melakukan survey dan menentukan biaya instalasi.",
                         data: null,
                     };
                 }
@@ -133,17 +135,55 @@ class KoneksiDataService {
                     alasanPenolakan: null,
                     tanggalVerifikasi: null,
                     canSubmit: true,
+                    subTahap: null,
+                    jumlahRAB: null,
+                    snapRedirectUrl: null,
+                    urlRab: null,
+                    catatanRab: null,
                 };
             }
             const canSubmit = koneksiData.StatusPengajuan === enums_1.StatusPengajuan.REJECTED;
             let message = "";
+            let subTahap = null;
+            let jumlahRAB = null;
+            let snapRedirectUrl = null;
+            let urlRab = null;
+            let catatanRab = null;
             switch (koneksiData.StatusPengajuan) {
                 case enums_1.StatusPengajuan.PENDING:
                     message = "Pengajuan Anda sedang dalam proses verifikasi";
                     break;
-                case enums_1.StatusPengajuan.APPROVED:
-                    message = "Pengajuan Anda sudah disetujui";
+                case enums_1.StatusPengajuan.APPROVED: {
+                    const meter = await Meter_1.Meter.findOne({ IdKoneksiData: koneksiData._id });
+                    if (meter) {
+                        subTahap = "AKTIF";
+                        message = "Selamat! Anda sudah menjadi pelanggan PDAM aktif";
+                    }
+                    else {
+                        const rab = await RAB_1.RAB.findOne({ idKoneksiData: koneksiData._id });
+                        if (!rab) {
+                            subTahap = "SURVEI";
+                            message =
+                                "Dokumen disetujui. Teknisi akan melakukan survei ke lokasi Anda";
+                        }
+                        else {
+                            urlRab = rab.urlRab || null;
+                            catatanRab = rab.catatan || null;
+                            jumlahRAB = rab.totalBiaya || null;
+                            if (rab.statusPembayaran === enums_1.EnumPaymentStatus.SETTLEMENT) {
+                                subTahap = "INSTALASI";
+                                message =
+                                    "Pembayaran RAB diterima. Teknisi sedang melakukan instalasi";
+                            }
+                            else {
+                                subTahap = "MENUNGGU_PEMBAYARAN_RAB";
+                                snapRedirectUrl = rab.paymentUrl || null;
+                                message = `RAB pemasangan tersedia. Silakan lakukan pembayaran sebesar Rp ${rab.totalBiaya?.toLocaleString("id-ID") ?? 0}`;
+                            }
+                        }
+                    }
                     break;
+                }
                 case enums_1.StatusPengajuan.REJECTED:
                     message = `Pengajuan Anda ditolak. Alasan: ${koneksiData.AlasanPenolakan || "Tidak ada alasan"}`;
                     break;
@@ -155,6 +195,11 @@ class KoneksiDataService {
                 alasanPenolakan: koneksiData.AlasanPenolakan || null,
                 tanggalVerifikasi: koneksiData.TanggalVerifikasi || null,
                 canSubmit,
+                subTahap,
+                jumlahRAB,
+                snapRedirectUrl,
+                urlRab,
+                catatanRab,
             };
         }
         catch (error) {
@@ -165,6 +210,11 @@ class KoneksiDataService {
                 alasanPenolakan: null,
                 tanggalVerifikasi: null,
                 canSubmit: false,
+                subTahap: null,
+                jumlahRAB: null,
+                snapRedirectUrl: null,
+                urlRab: null,
+                catatanRab: null,
             };
         }
     }

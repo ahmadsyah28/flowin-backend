@@ -1,10 +1,10 @@
 export declare enum EnumPaymentStatus {
-    PENDING = "Pending",
-    SETTLEMENT = "Settlement",
-    CANCEL = "Cancel",
-    EXPIRE = "Expire",
-    REFUND = "Refund",
-    CHARGEBACK = "Chargeback",
-    FRAUD = "Fraud"
+    PENDING = "pending",
+    SETTLEMENT = "settlement",
+    CANCEL = "cancel",
+    EXPIRE = "expire",
+    REFUND = "refund",
+    CHARGEBACK = "chargeback",
+    FRAUD = "fraud"
 }
 //# sourceMappingURL=payment.d.ts.map

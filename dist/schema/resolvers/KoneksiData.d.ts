@@ -1,20 +1,20 @@
-import { GraphQLContext } from "../../types";
-import { CreateKoneksiDataInput, UpdateKoneksiDataInput } from "../../services/KoneksiDataService";
+import { GraphQLContext } from "@/types";
+import { CreateKoneksiDataInput, UpdateKoneksiDataInput } from "@/services/KoneksiDataService";
 export declare const koneksiDataResolvers: {
     Query: {
-        koneksiData: (_: any, __: any, context: GraphQLContext) => Promise<import("../../services/KoneksiDataService").KoneksiDataResponse>;
+        koneksiData: (_: any, __: any, context: GraphQLContext) => Promise<import("@/services/KoneksiDataService").KoneksiDataResponse>;
         koneksiDataById: (_: any, { id }: {
             id: string;
-        }) => Promise<import("../../services/KoneksiDataService").KoneksiDataResponse>;
-        cekStatusPengajuan: (_: any, __: any, context: GraphQLContext) => Promise<import("../../services/KoneksiDataService").StatusPengajuanResponse>;
+        }) => Promise<import("@/services/KoneksiDataService").KoneksiDataResponse>;
+        cekStatusPengajuan: (_: any, __: any, context: GraphQLContext) => Promise<import("@/services/KoneksiDataService").StatusPengajuanResponse>;
     };
     Mutation: {
         createKoneksiData: (_: any, { input }: {
             input: CreateKoneksiDataInput;
-        }, context: GraphQLContext) => Promise<import("../../services/KoneksiDataService").KoneksiDataResponse>;
+        }, context: GraphQLContext) => Promise<import("@/services/KoneksiDataService").KoneksiDataResponse>;
         updateKoneksiData: (_: any, { input }: {
             input: UpdateKoneksiDataInput;
-        }, context: GraphQLContext) => Promise<import("../../services/KoneksiDataService").KoneksiDataResponse>;
+        }, context: GraphQLContext) => Promise<import("@/services/KoneksiDataService").KoneksiDataResponse>;
     };
     KoneksiData: {
         id: (parent: any) => any;

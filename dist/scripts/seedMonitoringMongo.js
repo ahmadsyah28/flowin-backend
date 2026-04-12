@@ -6,11 +6,11 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const dotenv_1 = __importDefault(require("dotenv"));
 const path_1 = __importDefault(require("path"));
 dotenv_1.default.config({ path: path_1.default.resolve(__dirname, "../../.env") });
-const database_1 = require("../config/database");
-const Meter_1 = require("../models/Meter");
-const KoneksiData_1 = require("../models/KoneksiData");
-const KelompokPelanggan_1 = require("../models/KelompokPelanggan");
-const RiwayatPenggunaan_1 = require("../models/RiwayatPenggunaan");
+const database_1 = require("@/config/database");
+const Meter_1 = require("@/models/Meter");
+const KoneksiData_1 = require("@/models/KoneksiData");
+const KelompokPelanggan_1 = require("@/models/KelompokPelanggan");
+const RiwayatPenggunaan_1 = require("@/models/RiwayatPenggunaan");
 const TARGET_USER_ID = "69d0cb64ec09d8618dfb3c63";
 const TARGET_KONEKSI_DATA_ID = "69d0ccabec09d8618dfb3c71";
 function randomDailyUsage(min = 150, max = 350) {

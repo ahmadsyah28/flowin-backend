@@ -1,7 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.NotifikasiService = void 0;
-const Notifikasi_1 = require("../models/Notifikasi");
+const Notifikasi_1 = require("@/models/Notifikasi");
 class NotifikasiService {
     static async getNotifikasiList(userId, filter) {
         try {

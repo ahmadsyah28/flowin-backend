@@ -1,8 +1,8 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.meterResolvers = void 0;
-const authMiddleware_1 = require("../../utils/authMiddleware");
-const MeterService_1 = require("../../services/MeterService");
+const authMiddleware_1 = require("@/utils/authMiddleware");
+const MeterService_1 = require("@/services/MeterService");
 exports.meterResolvers = {
     Query: {
         meterList: async (_, __, context) => {

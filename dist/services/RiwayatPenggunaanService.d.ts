@@ -1,5 +1,5 @@
 import { Types } from "mongoose";
-import { IRiwayatPenggunaan } from "../models/RiwayatPenggunaan";
+import { IRiwayatPenggunaan } from "@/models/RiwayatPenggunaan";
 export interface RiwayatPenggunaanListResponse {
     success: boolean;
     message: string;

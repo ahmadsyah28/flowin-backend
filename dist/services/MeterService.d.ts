@@ -1,5 +1,5 @@
 import { Types } from "mongoose";
-import { IMeter } from "../models/Meter";
+import { IMeter } from "@/models/Meter";
 export interface MeterResponse {
     success: boolean;
     message: string;

@@ -2,9 +2,9 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.LaporanService = void 0;
 const mongoose_1 = require("mongoose");
-const Laporan_1 = require("../models/Laporan");
-const GeoLokasi_1 = require("../models/GeoLokasi");
-const enums_1 = require("../enums");
+const Laporan_1 = require("@/models/Laporan");
+const GeoLokasi_1 = require("@/models/GeoLokasi");
+const enums_1 = require("@/enums");
 class LaporanService {
     static async getLaporanList(userId, filter) {
         try {

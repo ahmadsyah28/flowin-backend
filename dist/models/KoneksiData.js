@@ -36,7 +36,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.KoneksiData = void 0;
 const mongoose_1 = __importStar(require("mongoose"));
 const BaseModel_1 = require("./BaseModel");
-const enums_1 = require("../enums");
+const enums_1 = require("@/enums");
 const koneksiDataSchema = new mongoose_1.Schema({
     IdPelanggan: {
         type: mongoose_1.Schema.Types.ObjectId,

@@ -1,16 +1,25 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = require("express");
-const PembayaranService_1 = require("../services/PembayaranService");
+const PembayaranService_1 = require("@/services/PembayaranService");
+const RABService_1 = require("@/services/RABService");
 const webhookRouter = (0, express_1.Router)();
 webhookRouter.post("/midtrans", async (req, res) => {
     try {
-        console.log("📩 Midtrans webhook received:", {
-            order_id: req.body?.order_id,
+        const orderId = req.body?.order_id || "";
+        const isRABPayment = orderId.startsWith("RAB-");
+        console.log(`📩 Midtrans webhook received [${isRABPayment ? "RAB" : "TAGIHAN"}]:`, {
+            order_id: orderId,
             transaction_status: req.body?.transaction_status,
             payment_type: req.body?.payment_type,
         });
-        const result = await PembayaranService_1.PembayaranService.handleMidtransNotification(req.body);
+        let result;
+        if (isRABPayment) {
+            result = await RABService_1.RABService.handleRABNotification(req.body);
+        }
+        else {
+            result = await PembayaranService_1.PembayaranService.handleMidtransNotification(req.body);
+        }
         if (result.success) {
             console.log(`✅ Webhook processed: ${req.body?.order_id} → ${result.message}`);
             res.status(200).json({

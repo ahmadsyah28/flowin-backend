@@ -7,8 +7,8 @@ exports.createContext = exports.createApolloServer = void 0;
 const server_1 = require("@apollo/server");
 const index_1 = require("./typeDefs/index");
 const index_2 = __importDefault(require("./resolvers/index"));
-const config_1 = require("../config");
-const middlewares_1 = require("../middlewares");
+const config_1 = require("@/config");
+const middlewares_1 = require("@/middlewares");
 const createApolloServer = () => {
     const server = new server_1.ApolloServer({
         typeDefs: index_1.typeDefs,

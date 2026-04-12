@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.models = exports.kelompokPelangganSeed = exports.KategoriKelompok = exports.KodeKelompok = exports.KelompokPelanggan = exports.EnumStatusPembayaran = exports.Pembayaran = exports.Notifikasi = exports.GeoLokasi = exports.Laporan = exports.RiwayatPenggunaan = exports.Tagihan = exports.Meter = exports.KoneksiData = exports.Pengguna = void 0;
+exports.models = exports.RAB = exports.kelompokPelangganSeed = exports.KategoriKelompok = exports.KodeKelompok = exports.KelompokPelanggan = exports.EnumStatusPembayaran = exports.Pembayaran = exports.Notifikasi = exports.GeoLokasi = exports.Laporan = exports.RiwayatPenggunaan = exports.Tagihan = exports.Meter = exports.KoneksiData = exports.Pengguna = void 0;
 var Pengguna_1 = require("./Pengguna");
 Object.defineProperty(exports, "Pengguna", { enumerable: true, get: function () { return Pengguna_1.Pengguna; } });
 var KoneksiData_1 = require("./KoneksiData");
@@ -25,9 +25,12 @@ Object.defineProperty(exports, "KelompokPelanggan", { enumerable: true, get: fun
 Object.defineProperty(exports, "KodeKelompok", { enumerable: true, get: function () { return KelompokPelanggan_1.KodeKelompok; } });
 Object.defineProperty(exports, "KategoriKelompok", { enumerable: true, get: function () { return KelompokPelanggan_1.KategoriKelompok; } });
 Object.defineProperty(exports, "kelompokPelangganSeed", { enumerable: true, get: function () { return KelompokPelanggan_1.kelompokPelangganSeed; } });
+var RAB_1 = require("./RAB");
+Object.defineProperty(exports, "RAB", { enumerable: true, get: function () { return RAB_1.RAB; } });
 const Pengguna_2 = require("./Pengguna");
 const KoneksiData_2 = require("./KoneksiData");
 const Meter_2 = require("./Meter");
+const RAB_2 = require("./RAB");
 const Tagihan_2 = require("./Tagihan");
 const RiwayatPenggunaan_2 = require("./RiwayatPenggunaan");
 const Laporan_2 = require("./Laporan");
@@ -46,6 +49,7 @@ exports.models = {
     Notifikasi: Notifikasi_2.Notifikasi,
     Pembayaran: Pembayaran_2.Pembayaran,
     KelompokPelanggan: KelompokPelanggan_2.KelompokPelanggan,
+    RAB: RAB_2.RAB,
 };
 exports.default = exports.models;
 //# sourceMappingURL=index.js.map

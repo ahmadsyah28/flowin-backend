@@ -1,8 +1,8 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.MeterService = void 0;
-const Meter_1 = require("../models/Meter");
-const KoneksiData_1 = require("../models/KoneksiData");
+const Meter_1 = require("@/models/Meter");
+const KoneksiData_1 = require("@/models/KoneksiData");
 class MeterService {
     static async getMeterList(userId) {
         try {

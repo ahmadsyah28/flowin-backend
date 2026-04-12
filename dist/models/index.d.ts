@@ -8,6 +8,7 @@ export { GeoLokasi, IGeoLokasi } from "./GeoLokasi";
 export { Notifikasi, INotifikasi } from "./Notifikasi";
 export { Pembayaran, IPembayaran, EnumStatusPembayaran } from "./Pembayaran";
 export { KelompokPelanggan, IKelompokPelanggan, KodeKelompok, KategoriKelompok, kelompokPelangganSeed, } from "./KelompokPelanggan";
+export { RAB, IRAB, IRABDocument } from "./RAB";
 export { IBaseDocument } from "./BaseModel";
 export declare const models: {
     Pengguna: import("mongoose").Model<import("./Pengguna").IPengguna, {}, {}, {}, import("mongoose").Document<unknown, {}, import("./Pengguna").IPengguna, {}, import("mongoose").DefaultSchemaOptions> & import("./Pengguna").IPengguna & Required<{
@@ -74,6 +75,13 @@ export declare const models: {
     } & {
         id: string;
     }, any, import("./KelompokPelanggan").IKelompokPelanggan>;
+    RAB: import("mongoose").Model<import("./RAB").IRABDocument, {}, {}, {}, import("mongoose").Document<unknown, {}, import("./RAB").IRABDocument, {}, import("mongoose").DefaultSchemaOptions> & import("./RAB").IRABDocument & Required<{
+        _id: import("mongoose").Types.ObjectId;
+    }> & {
+        __v: number;
+    } & {
+        id: string;
+    }, any, import("./RAB").IRABDocument>;
 };
 export default models;
 //# sourceMappingURL=index.d.ts.map

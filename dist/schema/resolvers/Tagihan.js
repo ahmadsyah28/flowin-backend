@@ -1,9 +1,9 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.tagihanResolvers = void 0;
-const authMiddleware_1 = require("../../utils/authMiddleware");
-const TagihanService_1 = require("../../services/TagihanService");
-const enums_1 = require("../../enums");
+const authMiddleware_1 = require("@/utils/authMiddleware");
+const TagihanService_1 = require("@/services/TagihanService");
+const enums_1 = require("@/enums");
 exports.tagihanResolvers = {
     PaymentStatus: {
         PENDING: enums_1.EnumPaymentStatus.PENDING,

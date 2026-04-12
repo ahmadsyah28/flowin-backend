@@ -11,6 +11,7 @@ const GeoLokasi_1 = require("./GeoLokasi");
 const RiwayatPenggunaan_1 = require("./RiwayatPenggunaan");
 const Pembayaran_1 = require("./Pembayaran");
 const Monitoring_1 = require("./Monitoring");
+const RAB_1 = require("./RAB");
 exports.typeDefs = `
   # Scalar types untuk tipe data khusus
   scalar Date
@@ -44,5 +45,6 @@ exports.typeDefs = `
   ${RiwayatPenggunaan_1.riwayatPenggunaanTypeDefs}
   ${Pembayaran_1.pembayaranTypeDefs}
   ${Monitoring_1.monitoringTypeDefs}
+  ${RAB_1.rabTypeDefs}
 `;
 //# sourceMappingURL=index.js.map

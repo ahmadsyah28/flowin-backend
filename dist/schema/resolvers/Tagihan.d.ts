@@ -1,6 +1,6 @@
-import { GraphQLContext } from "../../types";
-import { TagihanFilterInput } from "../../services/TagihanService";
-import { EnumPaymentStatus } from "../../enums";
+import { GraphQLContext } from "@/types";
+import { TagihanFilterInput } from "@/services/TagihanService";
+import { EnumPaymentStatus } from "@/enums";
 export declare const tagihanResolvers: {
     PaymentStatus: {
         PENDING: EnumPaymentStatus;
@@ -14,18 +14,18 @@ export declare const tagihanResolvers: {
     Query: {
         tagihanList: (_: any, { filter }: {
             filter?: TagihanFilterInput;
-        }, context: GraphQLContext) => Promise<import("../../services/TagihanService").TagihanListResponse>;
+        }, context: GraphQLContext) => Promise<import("@/services/TagihanService").TagihanListResponse>;
         tagihan: (_: any, { id }: {
             id: string;
-        }) => Promise<import("../../services/TagihanService").TagihanResponse>;
-        tagihanAktif: (_: any, __: any, context: GraphQLContext) => Promise<import("../../services/TagihanService").TagihanResponse>;
-        tagihanRiwayat: (_: any, __: any, context: GraphQLContext) => Promise<import("../../services/TagihanService").TagihanListResponse>;
+        }) => Promise<import("@/services/TagihanService").TagihanResponse>;
+        tagihanAktif: (_: any, __: any, context: GraphQLContext) => Promise<import("@/services/TagihanService").TagihanResponse>;
+        tagihanRiwayat: (_: any, __: any, context: GraphQLContext) => Promise<import("@/services/TagihanService").TagihanListResponse>;
     };
     Mutation: {
         bayarTagihan: (_: any, { id, metodePembayaran }: {
             id: string;
             metodePembayaran: string;
-        }, context: GraphQLContext) => Promise<import("../../services/TagihanService").TagihanResponse>;
+        }, context: GraphQLContext) => Promise<import("@/services/TagihanService").TagihanResponse>;
     };
     Tagihan: {
         id: (parent: any) => any;

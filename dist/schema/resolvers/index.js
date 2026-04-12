@@ -9,6 +9,7 @@ const Notifikasi_1 = require("./Notifikasi");
 const Tagihan_1 = require("./Tagihan");
 const Pembayaran_1 = require("./Pembayaran");
 const Monitoring_1 = require("./Monitoring");
+const RAB_1 = require("./RAB");
 const resolvers = {
     Pengguna: {
         id: (parent) => parent._id?.toString() || parent.id,
@@ -49,6 +50,9 @@ const resolvers = {
     StatusPembayaran: {
         ...Pembayaran_1.pembayaranResolvers.StatusPembayaran,
     },
+    RAB: {
+        ...RAB_1.rabResolvers.RAB,
+    },
     Query: {
         hello: () => "Hello, from GraphQL server!",
         ...Pengguna_1.penggunaResolvers.Query,
@@ -60,6 +64,7 @@ const resolvers = {
         ...Tagihan_1.tagihanResolvers.Query,
         ...Pembayaran_1.pembayaranResolvers.Query,
         ...Monitoring_1.monitoringResolvers.Query,
+        ...RAB_1.rabResolvers.Query,
     },
     Mutation: {
         testMutation: () => "This is a test mutation response.",
@@ -68,6 +73,7 @@ const resolvers = {
         ...Laporan_1.laporanResolvers.Mutation,
         ...Tagihan_1.tagihanResolvers.Mutation,
         ...Pembayaran_1.pembayaranResolvers.Mutation,
+        ...RAB_1.rabResolvers.Mutation,
     },
     Subscription: {
         testSubscription: {

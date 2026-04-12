@@ -1,6 +1,6 @@
 import { Types } from "mongoose";
-import { IKoneksiData } from "../models/KoneksiData";
-import { StatusPengajuan } from "../enums";
+import { IKoneksiData } from "@/models/KoneksiData";
+import { StatusPengajuan } from "@/enums";
 export interface CreateKoneksiDataInput {
     nik: string;
     nikUrl: string;
@@ -34,6 +34,11 @@ export interface StatusPengajuanResponse {
     alasanPenolakan: string | null;
     tanggalVerifikasi: Date | null;
     canSubmit: boolean;
+    subTahap: string | null;
+    jumlahRAB: number | null;
+    snapRedirectUrl: string | null;
+    urlRab: string | null;
+    catatanRab: string | null;
 }
 export declare class KoneksiDataService {
     static getKoneksiData(userId: string | Types.ObjectId): Promise<KoneksiDataResponse>;

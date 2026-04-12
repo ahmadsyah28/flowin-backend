@@ -1,9 +1,9 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.pembayaranResolvers = void 0;
-const authMiddleware_1 = require("../../utils/authMiddleware");
-const PembayaranService_1 = require("../../services/PembayaranService");
-const Pembayaran_1 = require("../../models/Pembayaran");
+const authMiddleware_1 = require("@/utils/authMiddleware");
+const PembayaranService_1 = require("@/services/PembayaranService");
+const Pembayaran_1 = require("@/models/Pembayaran");
 exports.pembayaranResolvers = {
     StatusPembayaran: {
         Pending: Pembayaran_1.EnumStatusPembayaran.PENDING,

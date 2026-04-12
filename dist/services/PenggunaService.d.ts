@@ -1,4 +1,4 @@
-import { IPengguna } from "../models/Pengguna";
+import { IPengguna } from "@/models/Pengguna";
 export interface RegisterInput {
     email: string;
     noHP: string;

@@ -1,5 +1,5 @@
 import { Types } from "mongoose";
-import { IPembayaran } from "../models/Pembayaran";
+import { IPembayaran } from "@/models/Pembayaran";
 export interface MidtransSnapResponse {
     token: string;
     redirect_url: string;

@@ -6,7 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const dotenv_1 = __importDefault(require("dotenv"));
 const path_1 = __importDefault(require("path"));
 dotenv_1.default.config({ path: path_1.default.resolve(__dirname, "../../.env") });
-const redis_1 = require("../config/redis");
+const redis_1 = require("@/config/redis");
 const TARGET_METER_ID = "69b1749e1eb7c93ea3c2f53b";
 const CURRENT_MONTH = "2026-04";
 function randomDailyUsage(min = 150, max = 350) {
