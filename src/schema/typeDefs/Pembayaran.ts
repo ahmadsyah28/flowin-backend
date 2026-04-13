@@ -58,8 +58,6 @@ export const pembayaranTypeDefs = `
         pembayaranList(limit: Int, offset: Int): PembayaranListResponse!
         # Mendapatkan detail pembayaran
         pembayaran(id: ObjectId!): PembayaranResponse!
-        # Cek status pembayaran di Midtrans
-        cekStatusPembayaran(orderId: String!): PembayaranResponse!
     }
 
     extend type Mutation {

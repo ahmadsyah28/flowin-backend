@@ -35,15 +35,6 @@ export const pembayaranResolvers = {
       const user = requireAuth(context);
       return PembayaranService.getPembayaranDetail(id, user._id);
     },
-
-    cekStatusPembayaran: async (
-      _: any,
-      { orderId }: { orderId: string },
-      context: GraphQLContext,
-    ) => {
-      requireAuth(context);
-      return PembayaranService.checkTransactionStatus(orderId);
-    },
   },
 
   Mutation: {

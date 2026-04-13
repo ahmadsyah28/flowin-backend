@@ -18,7 +18,9 @@
     "seed:mongo": "ts-node --transpileOnly -r tsconfig-paths/register src/scripts/seedMonitoringMongo.ts",
     "seed:redis": "ts-node --transpileOnly -r tsconfig-paths/register src/scripts/seedMonitoringRedis.ts",
     "seed:tagihan": "ts-node --transpileOnly -r tsconfig-paths/register src/scripts/seedTagihan.ts",
-    "seed:uji-bayar": "ts-node --transpileOnly -r tsconfig-paths/register src/scripts/seedUjiPembayaran.ts"
+    "seed:uji-bayar": "ts-node --transpileOnly -r tsconfig-paths/register src/scripts/seedUjiPembayaran.ts",
+    "seed:rab": "ts-node --transpileOnly -r tsconfig-paths/register src/scripts/seedRAB.ts",
+    "seed:meter": "ts-node --transpileOnly -r tsconfig-paths/register src/scripts/seedMeter.ts"
   },
   "keywords": [],
   "author": "",
