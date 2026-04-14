@@ -226,5 +226,42 @@ export const monitoringResolvers = {
         data: convertHourlyDataToArray(result.data),
       };
     },
+
+    /**
+     * Query: monitoringMonthlyUsage
+     *
+     * Mendapatkan data penggunaan harian untuk bulan tertentu.
+     * Otomatis memilih sumber data berdasarkan periode.
+     *
+     * @param meteranId - ID meteran
+     * @param periode - Periode bulan (YYYY-MM)
+     * @returns MonitoringMonthlyUsageResponse
+     */
+    monitoringMonthlyUsage: async (
+      _: any,
+      { meteranId, periode }: { meteranId: string; periode: string },
+      context: GraphQLContext,
+    ) => {
+      requireAuth(context);
+
+      const result = await MonitoringService.getMonthlyUsage(
+        meteranId,
+        periode,
+      );
+
+      if (!result.success || !result.data) {
+        return {
+          success: result.success,
+          message: result.message,
+          data: null,
+        };
+      }
+
+      return {
+        success: result.success,
+        message: result.message,
+        data: formatMonthlyData(result.data),
+      };
+    },
   },
 };

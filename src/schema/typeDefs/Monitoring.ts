@@ -204,6 +204,15 @@ export const monitoringTypeDefs = `
     data: [HourlyEntry!]
   }
 
+  """
+  Response untuk query data penggunaan bulanan per periode
+  """
+  type MonitoringMonthlyUsageResponse {
+    success: Boolean!
+    message: String!
+    data: MonthlyUsageData
+  }
+
   # ==========================================
   # QUERIES
   # ==========================================
@@ -241,5 +250,18 @@ export const monitoringTypeDefs = `
       meteranId: String!, 
       tanggal: String!
     ): MonitoringHourlyResponse!
+
+    """
+    Mendapatkan data penggunaan harian untuk bulan tertentu
+    Otomatis memilih sumber: Redis (bulan ini) atau MongoDB (bulan lalu)
+    
+    @param meteranId - ID meteran
+    @param periode - Periode bulan dalam format YYYY-MM
+    @returns MonitoringMonthlyUsageResponse dengan data harian
+    """
+    monitoringMonthlyUsage(
+      meteranId: ObjectId!,
+      periode: String!
+    ): MonitoringMonthlyUsageResponse!
   }
 `;

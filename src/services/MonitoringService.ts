@@ -921,4 +921,63 @@ export class MonitoringService {
       };
     }
   }
+
+  /**
+   * Mendapatkan data penggunaan harian untuk bulan tertentu
+   *
+   * Otomatis memilih sumber data:
+   * - Bulan berjalan → Redis (IoT real-time)
+   * - Bulan sebelumnya → MongoDB (arsip)
+   *
+   * @param meteranId - ID meteran
+   * @param periode - Periode bulan (YYYY-MM)
+   * @returns MonthlyUsageData atau null
+   */
+  static async getMonthlyUsage(
+    meteranId: string | Types.ObjectId,
+    periode: string,
+  ): Promise<{
+    success: boolean;
+    message: string;
+    data: MonthlyUsageData | null;
+  }> {
+    try {
+      const meter = await Meter.findById(meteranId);
+      if (!meter) {
+        return {
+          success: false,
+          message: "Meteran tidak ditemukan",
+          data: null,
+        };
+      }
+
+      const now = new Date();
+      const currentPeriode = getPeriode(now);
+      const meteranIdStr = meteranId.toString();
+
+      let data: MonthlyUsageData | null = null;
+
+      if (periode === currentPeriode) {
+        // Bulan berjalan - ambil dari Redis
+        data = await getRedisMonthlyUsage(meteranIdStr, periode);
+      } else {
+        // Bulan sebelumnya - ambil dari MongoDB
+        data = await getMongoMonthlyUsage(meteranId, periode);
+      }
+
+      return {
+        success: true,
+        message: data
+          ? "Berhasil mendapatkan data penggunaan"
+          : "Tidak ada data untuk periode ini",
+        data,
+      };
+    } catch (error: any) {
+      return {
+        success: false,
+        message: error.message || "Gagal mendapatkan data penggunaan bulanan",
+        data: null,
+      };
+    }
+  }
 }
