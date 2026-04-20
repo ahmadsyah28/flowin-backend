@@ -17,6 +17,9 @@ exports.penggunaResolvers = {
         login: async (_, { input }) => {
             return PenggunaService_1.PenggunaService.login(input);
         },
+        googleLogin: async (_, { input }) => {
+            return PenggunaService_1.PenggunaService.googleLogin(input);
+        },
         verifyOTP: async (_, { input }) => {
             return PenggunaService_1.PenggunaService.verifyOTP(input);
         },

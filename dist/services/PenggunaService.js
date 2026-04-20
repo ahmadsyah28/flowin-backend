@@ -4,6 +4,7 @@ exports.PenggunaService = void 0;
 const Pengguna_1 = require("../models/Pengguna");
 const auth_1 = require("../utils/auth");
 const EmailService_1 = require("../services/EmailService");
+const googleAuth_1 = require("../utils/googleAuth");
 const sanitizeUserResponse = (user) => {
     const userResponse = user.toObject();
     userResponse.password = undefined;
@@ -240,6 +241,59 @@ class PenggunaService {
             return {
                 success: false,
                 message: error.message || "Terjadi kesalahan saat login",
+                token: null,
+                user: null,
+            };
+        }
+    }
+    static async googleLogin(input) {
+        try {
+            const googleUser = await (0, googleAuth_1.verifyGoogleToken)(input.idToken);
+            if (!googleUser.email) {
+                return {
+                    success: false,
+                    message: "Tidak dapat mengambil email dari akun Google",
+                    token: null,
+                    user: null,
+                };
+            }
+            const user = await Pengguna_1.Pengguna.findOne({ email: googleUser.email.toLowerCase() });
+            if (!user) {
+                return {
+                    success: false,
+                    message: "Email belum terdaftar, silakan lakukan pendaftaran terlebih dahulu.",
+                    token: null,
+                    user: null,
+                };
+            }
+            if (!user.isVerified) {
+                return {
+                    success: false,
+                    message: "Akun belum diverifikasi. Silakan verifikasi email Anda terlebih dahulu.",
+                    token: null,
+                    user: null,
+                };
+            }
+            if (!user.googleId) {
+                user.googleId = googleUser.sub;
+            }
+            if (googleUser.picture && !user.profilePicture) {
+                user.profilePicture = googleUser.picture;
+            }
+            await user.save();
+            const token = (0, auth_1.generateToken)(user);
+            const userResponse = sanitizeUserResponse(user);
+            return {
+                success: true,
+                message: "Login berhasil",
+                token,
+                user: userResponse,
+            };
+        }
+        catch (error) {
+            return {
+                success: false,
+                message: error.message || "Terjadi kesalahan saat login dengan Google",
                 token: null,
                 user: null,
             };

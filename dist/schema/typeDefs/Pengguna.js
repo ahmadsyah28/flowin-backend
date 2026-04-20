@@ -27,6 +27,11 @@ exports.penggunaTypeDefs = `
         email: String!
     }
 
+    # Input untuk Google Login
+    input GoogleLoginInput {
+        idToken: String!
+    }
+
     # Input untuk update profil pengguna
     input UpdateProfileInput {
         namaLengkap: String
@@ -77,6 +82,8 @@ exports.penggunaTypeDefs = `
         register(input: RegisterInput!): AuthPayload!
         # Login pengguna
         login(input: LoginInput!): AuthPayload!
+        # Login dengan Google
+        googleLogin(input: GoogleLoginInput!): AuthPayload!
         # Logout
         logout: StandardResponse!
 

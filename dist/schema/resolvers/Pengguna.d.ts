@@ -1,5 +1,5 @@
 import { GraphQLContext } from "../../types";
-import { RegisterInput, LoginInput, VerifyOTPInput, ResendOTPInput, UpdateProfileInput, UpdatePasswordInput } from "../../services/PenggunaService";
+import { RegisterInput, LoginInput, GoogleLoginInput, VerifyOTPInput, ResendOTPInput, UpdateProfileInput, UpdatePasswordInput } from "../../services/PenggunaService";
 export declare const penggunaResolvers: {
     Query: {
         me: (_: any, __: any, context: GraphQLContext) => Promise<import("../../models").IPengguna>;
@@ -10,6 +10,9 @@ export declare const penggunaResolvers: {
         }) => Promise<import("../../services/PenggunaService").AuthResponse>;
         login: (_: any, { input }: {
             input: LoginInput;
+        }) => Promise<import("../../services/PenggunaService").AuthResponse>;
+        googleLogin: (_: any, { input }: {
+            input: GoogleLoginInput;
         }) => Promise<import("../../services/PenggunaService").AuthResponse>;
         verifyOTP: (_: any, { input }: {
             input: VerifyOTPInput;

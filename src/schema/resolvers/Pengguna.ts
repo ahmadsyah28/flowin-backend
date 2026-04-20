@@ -4,6 +4,7 @@ import {
   PenggunaService,
   RegisterInput,
   LoginInput,
+  GoogleLoginInput,
   VerifyOTPInput,
   ResendOTPInput,
   UpdateProfileInput,
@@ -28,6 +29,11 @@ export const penggunaResolvers = {
     // Login user
     login: async (_: any, { input }: { input: LoginInput }) => {
       return PenggunaService.login(input);
+    },
+
+    // Google Login
+    googleLogin: async (_: any, { input }: { input: GoogleLoginInput }) => {
+      return PenggunaService.googleLogin(input);
     },
 
     // Verify OTP

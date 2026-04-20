@@ -1,6 +1,7 @@
 import { Pengguna, IPengguna } from "@/models/Pengguna";
 import { generateToken } from "@/utils/auth";
 import { generateOTP, sendOTPEmail } from "@/services/EmailService";
+import { verifyGoogleToken } from "@/utils/googleAuth";
 
 // Input interfaces
 export interface RegisterInput {
@@ -8,7 +9,6 @@ export interface RegisterInput {
   noHP: string;
   namaLengkap: string;
   password: string;
-  confirmPassword: string;
 }
 
 export interface LoginInput {
@@ -23,6 +23,10 @@ export interface VerifyOTPInput {
 
 export interface ResendOTPInput {
   email: string;
+}
+
+export interface GoogleLoginInput {
+  idToken: string;
 }
 
 export interface UpdateProfileInput {
@@ -85,16 +89,6 @@ export class PenggunaService {
         return {
           success: false,
           message: "Password minimal 6 karakter",
-          token: null,
-          user: null,
-        };
-      }
-
-      // Validate confirmPassword matches
-      if (input.password !== input.confirmPassword) {
-        return {
-          success: false,
-          message: "Konfirmasi password tidak sesuai",
           token: null,
           user: null,
         };
@@ -363,6 +357,75 @@ export class PenggunaService {
       return {
         success: false,
         message: error.message || "Terjadi kesalahan saat login",
+        token: null,
+        user: null,
+      };
+    }
+  }
+
+  /**
+   * Google Login (only for already registered & verified users)
+   */
+  static async googleLogin(input: GoogleLoginInput): Promise<AuthResponse> {
+    try {
+      // Verify Google token
+      const googleUser = await verifyGoogleToken(input.idToken);
+
+      if (!googleUser.email) {
+        return {
+          success: false,
+          message: "Tidak dapat mengambil email dari akun Google",
+          token: null,
+          user: null,
+        };
+      }
+
+      // Find user by email
+      const user = await Pengguna.findOne({ email: googleUser.email.toLowerCase() });
+      if (!user) {
+        return {
+          success: false,
+          message:
+            "Email belum terdaftar, silakan lakukan pendaftaran terlebih dahulu.",
+          token: null,
+          user: null,
+        };
+      }
+
+      // Check if account is verified
+      if (!user.isVerified) {
+        return {
+          success: false,
+          message:
+            "Akun belum diverifikasi. Silakan verifikasi email Anda terlebih dahulu.",
+          token: null,
+          user: null,
+        };
+      }
+
+      // Update Google info if not set
+      if (!user.googleId) {
+        user.googleId = googleUser.sub;
+      }
+      if (googleUser.picture && !user.profilePicture) {
+        user.profilePicture = googleUser.picture;
+      }
+      await user.save();
+
+      // Generate JWT token
+      const token = generateToken(user);
+      const userResponse = sanitizeUserResponse(user);
+
+      return {
+        success: true,
+        message: "Login berhasil",
+        token,
+        user: userResponse,
+      };
+    } catch (error: any) {
+      return {
+        success: false,
+        message: error.message || "Terjadi kesalahan saat login dengan Google",
         token: null,
         user: null,
       };

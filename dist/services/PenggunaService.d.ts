@@ -16,6 +16,9 @@ export interface VerifyOTPInput {
 export interface ResendOTPInput {
     email: string;
 }
+export interface GoogleLoginInput {
+    idToken: string;
+}
 export interface UpdateProfileInput {
     namaLengkap?: string;
     noHP?: string;
@@ -40,6 +43,7 @@ export declare class PenggunaService {
     static verifyOTP(input: VerifyOTPInput): Promise<AuthResponse>;
     static resendOTP(input: ResendOTPInput): Promise<MutationResponse>;
     static login(input: LoginInput): Promise<AuthResponse>;
+    static googleLogin(input: GoogleLoginInput): Promise<AuthResponse>;
     static logout(userId: string): Promise<MutationResponse>;
     static updateProfile(userId: string, input: UpdateProfileInput): Promise<MutationResponse>;
     static updatePassword(user: IPengguna, input: UpdatePasswordInput): Promise<MutationResponse>;

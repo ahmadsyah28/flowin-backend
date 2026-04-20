@@ -5,7 +5,6 @@ export const penggunaTypeDefs = `
         noHP: String!
         namaLengkap: String!
         password: String!
-        confirmPassword: String!
     }
 
     # Input unttuk  login pengguna
@@ -23,6 +22,11 @@ export const penggunaTypeDefs = `
     # Input untuk resend OTP
     input ResendOTPInput {
         email: String!
+    }
+
+    # Input untuk Google Login
+    input GoogleLoginInput {
+        idToken: String!
     }
 
     # Input untuk update profil pengguna
@@ -75,6 +79,8 @@ export const penggunaTypeDefs = `
         register(input: RegisterInput!): AuthPayload!
         # Login pengguna
         login(input: LoginInput!): AuthPayload!
+        # Login dengan Google
+        googleLogin(input: GoogleLoginInput!): AuthPayload!
         # Logout
         logout: StandardResponse!
 
