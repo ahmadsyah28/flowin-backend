@@ -34,7 +34,7 @@ import { KelompokPelanggan, KodeKelompok } from "@/models/KelompokPelanggan";
 // KONFIGURASI
 // ==========================================
 
-const TARGET_KONEKSI_DATA_ID = "69db512cbc240cdee6d5431a";
+const TARGET_KONEKSI_DATA_ID = "69e0bc8034bdc72790ae71fb";
 
 // Kelompok pelanggan yang akan ditetapkan
 const TARGET_KODE_KELOMPOK = KodeKelompok.RUMAH_TANGGA_A;

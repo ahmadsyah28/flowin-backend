@@ -36,8 +36,8 @@ import { EnumPaymentStatus } from "@/enums";
 // KONFIGURASI
 // ==========================================
 
-const TARGET_USER_ID = "69d652e7f6c026df1775e4f5";
-const TARGET_KONEKSI_DATA_ID = "69db512cbc240cdee6d5431a";
+const TARGET_USER_ID = "69e0ba0e21964ced7aa5d2d0";
+const TARGET_KONEKSI_DATA_ID = "69e0bc8034bdc72790ae71fb";
 
 // ==========================================
 // HELPER: Hitung biaya berdasarkan kelompok pelanggan

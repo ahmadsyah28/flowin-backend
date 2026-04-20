@@ -16,6 +16,8 @@ export interface IPengguna extends IBaseDocument {
   googleId?: string;
   profilePicture?: string;
   authProvider: "email" | "google";
+  otp?: string;
+  otpExpiry?: Date;
   comparePassword(candidatePassword: string): Promise<boolean>;
 }
 
@@ -63,6 +65,16 @@ const penggunaSchema = new Schema<IPengguna>({
     type: String,
     enum: ["email", "google"],
     default: "email",
+  },
+  otp: {
+    type: String,
+    required: false,
+    default: null,
+  },
+  otpExpiry: {
+    type: Date,
+    required: false,
+    default: null,
   },
   ...baseSchemaFields,
 });

@@ -1,10 +1,6 @@
 import { Pengguna, IPengguna } from "@/models/Pengguna";
-import {
-  generateToken,
-  generateVerificationToken,
-  verifyEmailToken,
-} from "@/utils/auth";
-import { verifyGoogleToken, GoogleUserInfo } from "@/utils/googleAuth";
+import { generateToken } from "@/utils/auth";
+import { generateOTP, sendOTPEmail } from "@/services/EmailService";
 
 // Input interfaces
 export interface RegisterInput {
@@ -12,6 +8,7 @@ export interface RegisterInput {
   noHP: string;
   namaLengkap: string;
   password: string;
+  confirmPassword: string;
 }
 
 export interface LoginInput {
@@ -19,17 +16,18 @@ export interface LoginInput {
   password: string;
 }
 
-export interface GoogleLoginInput {
-  googleToken: string;
+export interface VerifyOTPInput {
+  email: string;
+  otp: string;
+}
+
+export interface ResendOTPInput {
+  email: string;
 }
 
 export interface UpdateProfileInput {
   namaLengkap?: string;
   noHP?: string;
-}
-
-export interface CompleteGoogleProfileInput {
-  noHP: string;
 }
 
 export interface UpdatePasswordInput {
@@ -56,28 +54,34 @@ const sanitizeUserResponse = (user: any) => {
   const userResponse = user.toObject();
   userResponse.password = undefined;
   userResponse.token = undefined;
+  userResponse.otp = undefined;
+  userResponse.otpExpiry = undefined;
   return userResponse;
+};
+
+// Email format validation
+const isValidEmail = (email: string): boolean => {
+  return /^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/.test(email);
 };
 
 export class PenggunaService {
   /**
-   * Register a new user
+   * Register a new user (sends OTP, account is NOT verified yet)
    */
   static async register(input: RegisterInput): Promise<AuthResponse> {
     try {
-      // Check if email already exists
-      const existingUser = await Pengguna.findOne({ email: input.email });
-      if (existingUser) {
+      // Validate email format
+      if (!isValidEmail(input.email)) {
         return {
           success: false,
-          message: "Email sudah terdaftar",
+          message: "Format email tidak valid",
           token: null,
           user: null,
         };
       }
 
-      // Validate input
-      if (input.password.length < 6) {
+      // Validate password not empty
+      if (!input.password || input.password.length < 6) {
         return {
           success: false,
           message: "Password minimal 6 karakter",
@@ -86,28 +90,76 @@ export class PenggunaService {
         };
       }
 
-      // Create verification token
-      const verificationToken = generateVerificationToken();
+      // Validate confirmPassword matches
+      if (input.password !== input.confirmPassword) {
+        return {
+          success: false,
+          message: "Konfirmasi password tidak sesuai",
+          token: null,
+          user: null,
+        };
+      }
 
-      // Create new user
-      const user = await Pengguna.create({
-        ...input,
-        token: verificationToken,
+      // Check if email already exists
+      const existingUser = await Pengguna.findOne({ email: input.email });
+      if (existingUser) {
+        // If existing user is not verified, allow re-registration by resending OTP
+        if (!existingUser.isVerified) {
+          const otp = generateOTP();
+          const otpExpiry = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes
+
+          existingUser.otp = otp;
+          existingUser.otpExpiry = otpExpiry;
+          existingUser.namaLengkap = input.namaLengkap;
+          existingUser.noHP = input.noHP;
+          existingUser.password = input.password;
+          await existingUser.save();
+
+          // Send OTP email
+          await sendOTPEmail(input.email, otp, input.namaLengkap);
+
+          return {
+            success: true,
+            message:
+              "Kode OTP telah dikirim ke email Anda. Silakan cek email untuk verifikasi.",
+            token: null,
+            user: null,
+          };
+        }
+
+        return {
+          success: false,
+          message: "Email sudah terdaftar",
+          token: null,
+          user: null,
+        };
+      }
+
+      // Generate OTP
+      const otp = generateOTP();
+      const otpExpiry = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes
+
+      // Create new user (isVerified = false)
+      await Pengguna.create({
+        email: input.email,
+        noHP: input.noHP,
+        namaLengkap: input.namaLengkap,
+        password: input.password,
+        isVerified: false,
+        authProvider: "email",
+        otp,
+        otpExpiry,
       });
 
-      // Generate JWT token
-      const jwtToken = generateToken(user);
-
-      // Remove sensitive data from response
-      const userResponse = sanitizeUserResponse(user);
-
-      // TODO: Send verification email here
+      // Send OTP email
+      await sendOTPEmail(input.email, otp, input.namaLengkap);
 
       return {
         success: true,
-        message: "Registrasi berhasil. Silakan cek email untuk verifikasi.",
-        token: jwtToken,
-        user: userResponse,
+        message:
+          "Kode OTP telah dikirim ke email Anda. Silakan cek email untuk verifikasi.",
+        token: null,
+        user: null,
       };
     } catch (error: any) {
       return {
@@ -120,16 +172,165 @@ export class PenggunaService {
   }
 
   /**
-   * Login user
+   * Verify OTP and activate account
+   */
+  static async verifyOTP(input: VerifyOTPInput): Promise<AuthResponse> {
+    try {
+      const user = await Pengguna.findOne({ email: input.email });
+      if (!user) {
+        return {
+          success: false,
+          message: "Email tidak ditemukan",
+          token: null,
+          user: null,
+        };
+      }
+
+      if (user.isVerified) {
+        return {
+          success: false,
+          message: "Akun sudah terverifikasi. Silakan login.",
+          token: null,
+          user: null,
+        };
+      }
+
+      // Check OTP match
+      if (!user.otp || user.otp !== input.otp) {
+        return {
+          success: false,
+          message: "Kode OTP tidak valid",
+          token: null,
+          user: null,
+        };
+      }
+
+      // Check OTP expiry
+      if (!user.otpExpiry || new Date() > user.otpExpiry) {
+        return {
+          success: false,
+          message: "Kode OTP telah kadaluarsa",
+          token: null,
+          user: null,
+        };
+      }
+
+      // Activate account
+      user.isVerified = true;
+      user.otp = undefined;
+      user.otpExpiry = undefined;
+      await user.save();
+
+      // Generate JWT token
+      const token = generateToken(user);
+      const userResponse = sanitizeUserResponse(user);
+
+      return {
+        success: true,
+        message: "Verifikasi berhasil. Akun Anda telah aktif.",
+        token,
+        user: userResponse,
+      };
+    } catch (error: any) {
+      return {
+        success: false,
+        message: error.message || "Terjadi kesalahan saat verifikasi OTP",
+        token: null,
+        user: null,
+      };
+    }
+  }
+
+  /**
+   * Resend OTP to email
+   */
+  static async resendOTP(input: ResendOTPInput): Promise<MutationResponse> {
+    try {
+      const user = await Pengguna.findOne({ email: input.email });
+      if (!user) {
+        return {
+          success: false,
+          message: "Email tidak ditemukan",
+          data: null,
+        };
+      }
+
+      if (user.isVerified) {
+        return {
+          success: false,
+          message: "Akun sudah terverifikasi",
+          data: null,
+        };
+      }
+
+      // Generate new OTP
+      const otp = generateOTP();
+      const otpExpiry = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes
+
+      user.otp = otp;
+      user.otpExpiry = otpExpiry;
+      await user.save();
+
+      // Send OTP email
+      await sendOTPEmail(user.email, otp, user.namaLengkap);
+
+      return {
+        success: true,
+        message: "Kode OTP baru telah dikirim ke email Anda",
+        data: null,
+      };
+    } catch (error: any) {
+      return {
+        success: false,
+        message: error.message || "Gagal mengirim ulang kode OTP",
+        data: null,
+      };
+    }
+  }
+
+  /**
+   * Login user (only verified email-based accounts)
    */
   static async login(input: LoginInput): Promise<AuthResponse> {
     try {
+      // Validate email format
+      if (!isValidEmail(input.email)) {
+        return {
+          success: false,
+          message: "Format email tidak valid",
+          token: null,
+          user: null,
+        };
+      }
+
+      // Validate password not empty
+      if (!input.password) {
+        return {
+          success: false,
+          message: "Password tidak boleh kosong",
+          token: null,
+          user: null,
+        };
+      }
+
       // Find user by email
       const user = await Pengguna.findOne({ email: input.email });
       if (!user) {
         return {
           success: false,
-          message: "Email atau password salah",
+          message:
+            "Email belum terdaftar, silakan lakukan pendaftaran terlebih dahulu.",
+          token: null,
+          user: null,
+        };
+      }
+
+      // Check if account is verified
+      if (!user.isVerified) {
+        return {
+          success: false,
+          message:
+            "Akun belum diverifikasi. Silakan verifikasi email Anda terlebih dahulu.",
           token: null,
           user: null,
         };
@@ -169,157 +370,6 @@ export class PenggunaService {
   }
 
   /**
-   * Login with Google
-   */
-  static async googleLogin(input: GoogleLoginInput): Promise<AuthResponse> {
-    try {
-      // Verify Google token
-      const googleUser = await verifyGoogleToken(input.googleToken);
-
-      if (!googleUser.email_verified) {
-        return {
-          success: false,
-          message: "Email Google belum terverifikasi",
-          token: null,
-          user: null,
-        };
-      }
-
-      // Check if user already exists
-      let user = await Pengguna.findOne({
-        $or: [{ email: googleUser.email }, { googleId: googleUser.sub }],
-      });
-
-      if (user) {
-        // Update Google ID if not set
-        if (!user.googleId) {
-          user.googleId = googleUser.sub;
-          user.authProvider = "google";
-          user.isVerified = true;
-          if (googleUser.picture) {
-            user.profilePicture = googleUser.picture;
-          }
-          await user.save();
-        }
-      } else {
-        // Create new user for Google login
-        user = await Pengguna.create({
-          email: googleUser.email,
-          namaLengkap: googleUser.name,
-          noHP: "", // Will need to be filled later
-          googleId: googleUser.sub,
-          profilePicture: googleUser.picture || "",
-          authProvider: "google",
-          isVerified: true,
-        });
-      }
-
-      // Generate JWT token
-      const token = generateToken(user);
-
-      // Remove sensitive data from response
-      const userResponse = sanitizeUserResponse(user);
-
-      return {
-        success: true,
-        message: "Login Google berhasil",
-        token,
-        user: userResponse,
-      };
-    } catch (error: any) {
-      return {
-        success: false,
-        message: error.message || "Terjadi kesalahan saat login dengan Google",
-        token: null,
-        user: null,
-      };
-    }
-  }
-
-  /**
-   * Register with Google (using ID Token)
-   */
-  static async registerWithGoogle(idToken: string): Promise<AuthResponse> {
-    try {
-      // Verify Google ID token
-      const googleUser = await verifyGoogleToken(idToken);
-
-      if (!googleUser.email_verified) {
-        return {
-          success: false,
-          message: "Email Google belum terverifikasi",
-          token: null,
-          user: null,
-        };
-      }
-
-      // Check if user already exists
-      let user = await Pengguna.findOne({
-        $or: [{ email: googleUser.email }, { googleId: googleUser.sub }],
-      });
-
-      if (user) {
-        // User exists, just return login response
-        // Update Google ID if not set
-        if (!user.googleId) {
-          user.googleId = googleUser.sub;
-          user.authProvider = "google";
-          user.isVerified = true;
-          if (googleUser.picture) {
-            user.profilePicture = googleUser.picture;
-          }
-          await user.save();
-        }
-
-        // Generate JWT token
-        const token = generateToken(user);
-
-        // Remove sensitive data from response
-        const userResponse = sanitizeUserResponse(user);
-
-        return {
-          success: true,
-          message: "Login berhasil",
-          token,
-          user: userResponse,
-        };
-      }
-
-      // Create new user for Google registration
-      user = await Pengguna.create({
-        email: googleUser.email,
-        namaLengkap: googleUser.name,
-        noHP: "", // Will need to be filled later
-        googleId: googleUser.sub,
-        profilePicture: googleUser.picture || "",
-        authProvider: "google",
-        isVerified: true,
-      });
-
-      // Generate JWT token
-      const token = generateToken(user);
-
-      // Remove sensitive data from response
-      const userResponse = sanitizeUserResponse(user);
-
-      return {
-        success: true,
-        message: "Registrasi dengan Google berhasil",
-        token,
-        user: userResponse,
-      };
-    } catch (error: any) {
-      return {
-        success: false,
-        message:
-          error.message || "Terjadi kesalahan saat registrasi dengan Google",
-        token: null,
-        user: null,
-      };
-    }
-  }
-
-  /**
    * Logout user
    */
   static async logout(userId: string): Promise<MutationResponse> {
@@ -343,7 +393,7 @@ export class PenggunaService {
       const updatedUser = await Pengguna.findByIdAndUpdate(
         userId,
         { ...input },
-        { new: true, select: "-password -token" },
+        { new: true, select: "-password -token -otp -otpExpiry" },
       );
 
       return {
@@ -393,7 +443,7 @@ export class PenggunaService {
 
       // Update password
       user.password = input.newPassword;
-      await user.save(); // This will trigger the pre-save middleware to hash the password
+      await user.save();
 
       return {
         success: true,
@@ -404,135 +454,6 @@ export class PenggunaService {
       return {
         success: false,
         message: error.message || "Gagal mengubah password",
-        data: null,
-      };
-    }
-  }
-
-  /**
-   * Verify email with token
-   */
-  static async verifyEmail(token: string): Promise<MutationResponse> {
-    try {
-      // Verify token
-      if (!verifyEmailToken(token)) {
-        return {
-          success: false,
-          message: "Token verifikasi tidak valid atau sudah expired",
-          data: null,
-        };
-      }
-
-      // Find user with this token
-      const user = await Pengguna.findOne({ token });
-      if (!user) {
-        return {
-          success: false,
-          message: "Token verifikasi tidak ditemukan",
-          data: null,
-        };
-      }
-
-      // Update user verification status
-      user.isVerified = true;
-      user.token = undefined;
-      await user.save();
-
-      const userResponse = sanitizeUserResponse(user);
-
-      return {
-        success: true,
-        message: "Email berhasil diverifikasi",
-        data: userResponse,
-      };
-    } catch (error: any) {
-      return {
-        success: false,
-        message: error.message || "Gagal verifikasi email",
-        data: null,
-      };
-    }
-  }
-
-  /**
-   * Resend verification email
-   */
-  static async resendVerificationEmail(
-    user: IPengguna,
-  ): Promise<MutationResponse> {
-    if (user.isVerified) {
-      return {
-        success: false,
-        message: "Email sudah terverifikasi",
-        data: null,
-      };
-    }
-
-    try {
-      // Generate new verification token
-      const verificationToken = generateVerificationToken();
-
-      // Update user token
-      await Pengguna.findByIdAndUpdate(user._id, {
-        token: verificationToken,
-      });
-
-      // TODO: Send verification email here
-
-      return {
-        success: true,
-        message: "Email verifikasi telah dikirim ulang",
-        data: null,
-      };
-    } catch (error: any) {
-      return {
-        success: false,
-        message: error.message || "Gagal mengirim ulang email verifikasi",
-        data: null,
-      };
-    }
-  }
-
-  /**
-   * Complete Google user profile (add phone number)
-   */
-  static async completeGoogleProfile(
-    userId: string,
-    input: CompleteGoogleProfileInput,
-  ): Promise<MutationResponse> {
-    try {
-      const user = await Pengguna.findById(userId);
-      if (!user) {
-        return {
-          success: false,
-          message: "User tidak ditemukan",
-          data: null,
-        };
-      }
-
-      if (user.authProvider !== "google") {
-        return {
-          success: false,
-          message: "Method ini hanya untuk user Google",
-          data: null,
-        };
-      }
-
-      // Update phone number
-      user.noHP = input.noHP;
-      await user.save();
-
-      const userResponse = sanitizeUserResponse(user);
-
-      return {
-        success: true,
-        message: "Profile Google berhasil dilengkapi",
-        data: userResponse,
-      };
-    } catch (error: any) {
-      return {
-        success: false,
-        message: error.message || "Gagal melengkapi profile",
         data: null,
       };
     }
