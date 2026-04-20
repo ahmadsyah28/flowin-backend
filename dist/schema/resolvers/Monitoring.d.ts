@@ -79,6 +79,26 @@ export declare const monitoringResolvers: {
                 liter: number;
             }[];
         }>;
+        monitoringMonthlyUsage: (_: any, { meteranId, periode }: {
+            meteranId: string;
+            periode: string;
+        }, context: GraphQLContext) => Promise<{
+            success: boolean;
+            message: string;
+            data: null;
+        } | {
+            success: true;
+            message: string;
+            data: {
+                periode: string;
+                totalPenggunaan: number;
+                dataHarian: {
+                    tanggal: string;
+                    liter: number;
+                }[];
+                sumber: "redis" | "mongodb";
+            } | null;
+        }>;
     };
 };
 //# sourceMappingURL=Monitoring.d.ts.map

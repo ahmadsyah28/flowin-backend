@@ -44,7 +44,6 @@ export declare class PembayaranService {
     private static verifyTagihanOwnership;
     static createPayment(tagihanId: string, userId: string | Types.ObjectId): Promise<CreatePaymentResponse>;
     static handleMidtransNotification(notificationBody: any): Promise<PembayaranResponse>;
-    static checkTransactionStatus(orderId: string): Promise<PembayaranResponse>;
     static getMyPembayaran(userId: string | Types.ObjectId, limit?: number, offset?: number): Promise<PembayaranListResponse>;
     static getPembayaranDetail(pembayaranId: string, userId: string | Types.ObjectId): Promise<PembayaranResponse>;
     private static mapMidtransStatus;

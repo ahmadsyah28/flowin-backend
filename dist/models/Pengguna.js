@@ -85,6 +85,16 @@ const penggunaSchema = new mongoose_1.Schema({
         enum: ["email", "google"],
         default: "email",
     },
+    otp: {
+        type: String,
+        required: false,
+        default: null,
+    },
+    otpExpiry: {
+        type: Date,
+        required: false,
+        default: null,
+    },
     ...BaseModel_1.baseSchemaFields,
 });
 (0, BaseModel_1.addBaseMiddleware)(penggunaSchema);

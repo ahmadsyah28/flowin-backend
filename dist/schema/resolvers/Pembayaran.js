@@ -21,10 +21,6 @@ exports.pembayaranResolvers = {
             const user = (0, authMiddleware_1.requireAuth)(context);
             return PembayaranService_1.PembayaranService.getPembayaranDetail(id, user._id);
         },
-        cekStatusPembayaran: async (_, { orderId }, context) => {
-            (0, authMiddleware_1.requireAuth)(context);
-            return PembayaranService_1.PembayaranService.checkTransactionStatus(orderId);
-        },
     },
     Mutation: {
         buatPembayaran: async (_, { tagihanId }, context) => {

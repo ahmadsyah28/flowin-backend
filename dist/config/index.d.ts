@@ -16,6 +16,13 @@ export declare const config: {
     };
     corsOrigin: string;
     graphqlPath: string;
+    email: {
+        host: string;
+        port: number;
+        secure: boolean;
+        user: string;
+        pass: string;
+    };
     midtrans: {
         serverKey: string;
         clientKey: string;

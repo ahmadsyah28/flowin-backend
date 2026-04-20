@@ -7,7 +7,7 @@ const dotenv_1 = __importDefault(require("dotenv"));
 const path_1 = __importDefault(require("path"));
 dotenv_1.default.config({ path: path_1.default.resolve(__dirname, "../../.env") });
 const redis_1 = require("../config/redis");
-const TARGET_METER_ID = "69b1749e1eb7c93ea3c2f53b";
+const TARGET_METER_ID = "69e0e35e2a3d8e78e7049b5c";
 const CURRENT_MONTH = "2026-04";
 function randomDailyUsage(min = 150, max = 350) {
     return Math.round((Math.random() * (max - min) + min) * 10) / 10;
@@ -64,11 +64,11 @@ async function main() {
         const dailyKey = `usage:${TARGET_METER_ID}:${CURRENT_MONTH}:daily`;
         const totalKey = `usage:${TARGET_METER_ID}:${CURRENT_MONTH}:total`;
         const latestKey = `usage:${TARGET_METER_ID}:latest`;
-        console.log("\n📍 Generating data harian (2 hari)...");
+        console.log("\n📍 Generating data harian (17 hari)...");
         const dataHarian = {};
         const dataPerJamPerHari = {};
         let total = 0;
-        for (let day = 1; day <= 2; day++) {
+        for (let day = 1; day <= 17; day++) {
             const dayStr = day.toString().padStart(2, "0");
             const dailyUsage = randomDailyUsage();
             dataHarian[dayStr] = dailyUsage;
@@ -78,7 +78,7 @@ async function main() {
             dataPerJamPerHari[tanggal] = hourly;
         }
         total = Math.round(total * 10) / 10;
-        console.log(`   ✓ 2 hari, total: ${total} liter`);
+        console.log(`   ✓ 17 hari, total: ${total} liter`);
         console.log("\n📍 Menyimpan data harian ke Redis Hash...");
         await redis.hset(dailyKey, dataHarian);
         console.log(`   ✓ Key: ${dailyKey} (${Object.keys(dataHarian).length} fields)`);
@@ -95,15 +95,15 @@ async function main() {
         }
         console.log(`   ✓ ${Object.keys(dataPerJamPerHari).length} keys hourly (${totalHourlyFields} fields total)`);
         console.log("\n📍 Menyimpan latest reading...");
-        const lastDayHourly = dataPerJamPerHari[`${CURRENT_MONTH}-02`] ?? {};
+        const lastDayHourly = dataPerJamPerHari[`${CURRENT_MONTH}-13`] ?? {};
         const latestReading = lastDayHourly["14"] ?? 0;
         const latestData = {
             volume: latestReading,
-            timestamp: new Date("2026-04-02T14:30:00").toISOString(),
+            timestamp: new Date("2026-04-17T14:30:00").toISOString(),
             meteranId: TARGET_METER_ID,
         };
         await redis.set(latestKey, JSON.stringify(latestData));
-        console.log(`   ✓ Key: ${latestKey} (${latestReading} liter @ 2026-04-02 14:30)`);
+        console.log(`   ✓ Key: ${latestKey} (${latestReading} liter @ 2026-04-17 14:30)`);
         console.log("\n📍 Set expiry 45 hari...");
         const ttl = 45 * 24 * 60 * 60;
         await redis.expire(dailyKey, ttl);

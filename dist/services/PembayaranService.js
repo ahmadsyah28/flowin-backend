@@ -210,50 +210,6 @@ class PembayaranService {
             };
         }
     }
-    static async checkTransactionStatus(orderId) {
-        try {
-            const statusResponse = await coreApi.transaction.status(orderId);
-            const pembayaran = await Pembayaran_1.Pembayaran.findOne({
-                MidtransOrderId: orderId,
-            });
-            if (!pembayaran) {
-                return {
-                    success: false,
-                    message: "Pembayaran tidak ditemukan",
-                    data: null,
-                };
-            }
-            const newStatus = this.mapMidtransStatus(statusResponse.transaction_status, statusResponse.fraud_status);
-            pembayaran.StatusPembayaran = newStatus;
-            pembayaran.MidtransResponse = statusResponse;
-            if (newStatus === Pembayaran_1.EnumStatusPembayaran.SUKSES) {
-                pembayaran.TanggalBayar = pembayaran.TanggalBayar ?? new Date();
-                pembayaran.MetodePembayaran =
-                    statusResponse.payment_type ?? pembayaran.MetodePembayaran;
-            }
-            await pembayaran.save();
-            if (newStatus === Pembayaran_1.EnumStatusPembayaran.SUKSES) {
-                await Tagihan_1.Tagihan.findByIdAndUpdate(pembayaran.IdTagihan, {
-                    StatusPembayaran: enums_1.EnumPaymentStatus.SETTLEMENT,
-                    TanggalPembayaran: pembayaran.TanggalBayar,
-                    MetodePembayaran: statusResponse.payment_type ?? pembayaran.MetodePembayaran,
-                });
-            }
-            return {
-                success: true,
-                message: `Status: ${newStatus}`,
-                data: pembayaran,
-            };
-        }
-        catch (error) {
-            console.error("PembayaranService.checkTransactionStatus error:", error);
-            return {
-                success: false,
-                message: `Gagal cek status transaksi: ${error.message}`,
-                data: null,
-            };
-        }
-    }
     static async getMyPembayaran(userId, limit = 10, offset = 0) {
         try {
             const [data, total] = await Promise.all([

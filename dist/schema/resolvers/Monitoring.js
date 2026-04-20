@@ -69,6 +69,22 @@ exports.monitoringResolvers = {
                 data: convertHourlyDataToArray(result.data),
             };
         },
+        monitoringMonthlyUsage: async (_, { meteranId, periode }, context) => {
+            (0, authMiddleware_1.requireAuth)(context);
+            const result = await MonitoringService_1.MonitoringService.getMonthlyUsage(meteranId, periode);
+            if (!result.success || !result.data) {
+                return {
+                    success: result.success,
+                    message: result.message,
+                    data: null,
+                };
+            }
+            return {
+                success: result.success,
+                message: result.message,
+                data: formatMonthlyData(result.data),
+            };
+        },
     },
 };
 //# sourceMappingURL=Monitoring.js.map

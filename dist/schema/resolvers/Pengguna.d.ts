@@ -1,5 +1,5 @@
 import { GraphQLContext } from "../../types";
-import { RegisterInput, LoginInput, GoogleLoginInput, UpdateProfileInput, UpdatePasswordInput, CompleteGoogleProfileInput } from "../../services/PenggunaService";
+import { RegisterInput, LoginInput, VerifyOTPInput, ResendOTPInput, UpdateProfileInput, UpdatePasswordInput } from "../../services/PenggunaService";
 export declare const penggunaResolvers: {
     Query: {
         me: (_: any, __: any, context: GraphQLContext) => Promise<import("../../models").IPengguna>;
@@ -8,15 +8,15 @@ export declare const penggunaResolvers: {
         register: (_: any, { input }: {
             input: RegisterInput;
         }) => Promise<import("../../services/PenggunaService").AuthResponse>;
-        registerWithGoogle: (_: any, { idToken }: {
-            idToken: string;
-        }) => Promise<import("../../services/PenggunaService").AuthResponse>;
         login: (_: any, { input }: {
             input: LoginInput;
         }) => Promise<import("../../services/PenggunaService").AuthResponse>;
-        googleLogin: (_: any, { input }: {
-            input: GoogleLoginInput;
+        verifyOTP: (_: any, { input }: {
+            input: VerifyOTPInput;
         }) => Promise<import("../../services/PenggunaService").AuthResponse>;
+        resendOTP: (_: any, { input }: {
+            input: ResendOTPInput;
+        }) => Promise<import("../../services/PenggunaService").MutationResponse>;
         logout: (_: any, __: any, context: GraphQLContext) => Promise<import("../../services/PenggunaService").MutationResponse>;
         updateProfile: (_: any, { input }: {
             input: UpdateProfileInput;
@@ -24,13 +24,6 @@ export declare const penggunaResolvers: {
         updatePassword: (_: any, { input }: {
             input: UpdatePasswordInput;
         }, context: GraphQLContext) => Promise<import("../../services/PenggunaService").MutationResponse>;
-        completeGoogleProfile: (_: any, { input }: {
-            input: CompleteGoogleProfileInput;
-        }, context: GraphQLContext) => Promise<import("../../services/PenggunaService").MutationResponse>;
-        verifyEmail: (_: any, { token }: {
-            token: string;
-        }) => Promise<import("../../services/PenggunaService").MutationResponse>;
-        resendVerificationEmail: (_: any, __: any, context: GraphQLContext) => Promise<import("../../services/PenggunaService").MutationResponse>;
     };
 };
 //# sourceMappingURL=Pengguna.d.ts.map

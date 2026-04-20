@@ -389,6 +389,42 @@ class MonitoringService {
             };
         }
     }
+    static async getMonthlyUsage(meteranId, periode) {
+        try {
+            const meter = await Meter_1.Meter.findById(meteranId);
+            if (!meter) {
+                return {
+                    success: false,
+                    message: "Meteran tidak ditemukan",
+                    data: null,
+                };
+            }
+            const now = new Date();
+            const currentPeriode = getPeriode(now);
+            const meteranIdStr = meteranId.toString();
+            let data = null;
+            if (periode === currentPeriode) {
+                data = await getRedisMonthlyUsage(meteranIdStr, periode);
+            }
+            else {
+                data = await getMongoMonthlyUsage(meteranId, periode);
+            }
+            return {
+                success: true,
+                message: data
+                    ? "Berhasil mendapatkan data penggunaan"
+                    : "Tidak ada data untuk periode ini",
+                data,
+            };
+        }
+        catch (error) {
+            return {
+                success: false,
+                message: error.message || "Gagal mendapatkan data penggunaan bulanan",
+                data: null,
+            };
+        }
+    }
 }
 exports.MonitoringService = MonitoringService;
 //# sourceMappingURL=MonitoringService.js.map

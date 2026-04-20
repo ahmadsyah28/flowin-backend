@@ -10,6 +10,8 @@ export interface IPengguna extends IBaseDocument {
     googleId?: string;
     profilePicture?: string;
     authProvider: "email" | "google";
+    otp?: string;
+    otpExpiry?: Date;
     comparePassword(candidatePassword: string): Promise<boolean>;
 }
 export declare const Pengguna: mongoose.Model<IPengguna, {}, {}, {}, mongoose.Document<unknown, {}, IPengguna, {}, mongoose.DefaultSchemaOptions> & IPengguna & Required<{

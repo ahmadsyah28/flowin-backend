@@ -16,9 +16,6 @@ export declare const pembayaranResolvers: {
         pembayaran: (_: any, { id }: {
             id: string;
         }, context: GraphQLContext) => Promise<import("../../services/PembayaranService").PembayaranResponse>;
-        cekStatusPembayaran: (_: any, { orderId }: {
-            orderId: string;
-        }, context: GraphQLContext) => Promise<import("../../services/PembayaranService").PembayaranResponse>;
     };
     Mutation: {
         buatPembayaran: (_: any, { tagihanId }: {

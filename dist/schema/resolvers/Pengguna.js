@@ -14,14 +14,14 @@ exports.penggunaResolvers = {
         register: async (_, { input }) => {
             return PenggunaService_1.PenggunaService.register(input);
         },
-        registerWithGoogle: async (_, { idToken }) => {
-            return PenggunaService_1.PenggunaService.registerWithGoogle(idToken);
-        },
         login: async (_, { input }) => {
             return PenggunaService_1.PenggunaService.login(input);
         },
-        googleLogin: async (_, { input }) => {
-            return PenggunaService_1.PenggunaService.googleLogin(input);
+        verifyOTP: async (_, { input }) => {
+            return PenggunaService_1.PenggunaService.verifyOTP(input);
+        },
+        resendOTP: async (_, { input }) => {
+            return PenggunaService_1.PenggunaService.resendOTP(input);
         },
         logout: async (_, __, context) => {
             const user = (0, middlewares_1.requireAuth)(context);
@@ -34,17 +34,6 @@ exports.penggunaResolvers = {
         updatePassword: async (_, { input }, context) => {
             const user = (0, middlewares_1.requireAuth)(context);
             return PenggunaService_1.PenggunaService.updatePassword(user, input);
-        },
-        completeGoogleProfile: async (_, { input }, context) => {
-            const user = (0, middlewares_1.requireAuth)(context);
-            return PenggunaService_1.PenggunaService.completeGoogleProfile(user._id.toString(), input);
-        },
-        verifyEmail: async (_, { token }) => {
-            return PenggunaService_1.PenggunaService.verifyEmail(token);
-        },
-        resendVerificationEmail: async (_, __, context) => {
-            const user = (0, middlewares_1.requireAuth)(context);
-            return PenggunaService_1.PenggunaService.resendVerificationEmail(user);
         },
     },
 };

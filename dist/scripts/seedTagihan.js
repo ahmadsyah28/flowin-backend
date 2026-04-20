@@ -14,8 +14,8 @@ const RiwayatPenggunaan_1 = require("../models/RiwayatPenggunaan");
 const Tagihan_1 = require("../models/Tagihan");
 const Pembayaran_1 = require("../models/Pembayaran");
 const enums_1 = require("../enums");
-const TARGET_USER_ID = "699aaa90b03afd83f892ec54";
-const TARGET_KONEKSI_DATA_ID = "69a137ba4bb449a9a8f55c48";
+const TARGET_USER_ID = "69e0ba0e21964ced7aa5d2d0";
+const TARGET_KONEKSI_DATA_ID = "69e0bc8034bdc72790ae71fb";
 function hitungBiaya(kelompok, pemakaianM3) {
     let biaya = 0;
     if (pemakaianM3 <= kelompok.BatasRendah) {

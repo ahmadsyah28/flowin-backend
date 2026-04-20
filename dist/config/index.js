@@ -51,6 +51,13 @@ exports.config = {
     },
     corsOrigin: process.env.CORS_ORIGIN || "*",
     graphqlPath: process.env.GRAPHQL_PATH || "/graphql",
+    email: {
+        host: process.env.SMTP_HOST || "smtp.gmail.com",
+        port: parseInt(process.env.SMTP_PORT || "587", 10),
+        secure: process.env.SMTP_SECURE === "true",
+        user: process.env.SMTP_USER || "",
+        pass: process.env.SMTP_PASS || "",
+    },
     midtrans: {
         serverKey: process.env.MIDTRANS_SERVER_KEY || "",
         clientKey: process.env.MIDTRANS_CLIENT_KEY || "",

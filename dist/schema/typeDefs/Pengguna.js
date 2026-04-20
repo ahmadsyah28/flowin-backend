@@ -16,9 +16,15 @@ exports.penggunaTypeDefs = `
         password: String!
     }
 
-    # Input untuk login dengan Google
-    input GoogleLoginInput {
-        googleToken: String!
+    # Input untuk verifikasi OTP
+    input VerifyOTPInput {
+        email: String!
+        otp: String!
+    }
+
+    # Input untuk resend OTP
+    input ResendOTPInput {
+        email: String!
     }
 
     # Input untuk update profil pengguna
@@ -31,11 +37,6 @@ exports.penggunaTypeDefs = `
     input UpdatePasswordInput {
         currentPassword: String
         newPassword: String!
-    }
-
-    # Input untuk melengkapi profil Google user
-    input CompleteGoogleProfileInput {
-        noHP: String!
     }
     
     # Type untuk respons auth (login/register)
@@ -74,25 +75,20 @@ exports.penggunaTypeDefs = `
     extend type Mutation {
         # Register pengguna baru
         register(input: RegisterInput!): AuthPayload!
-        # Register dengan Google
-        registerWithGoogle(idToken: String!): AuthPayload!
         # Login pengguna
         login(input: LoginInput!): AuthPayload!
-        # Login dengan Google
-        googleLogin(input: GoogleLoginInput!): AuthPayload!
         # Logout
         logout: StandardResponse!
+
+        # Verifikasi OTP
+        verifyOTP(input: VerifyOTPInput!): AuthPayload!
+        # Resend OTP
+        resendOTP(input: ResendOTPInput!): StandardResponse!
 
         # Update profil pengguna
         updateProfile(input: UpdateProfileInput!): StandardResponse!
         # Update password pengguna
         updatePassword(input: UpdatePasswordInput!): StandardResponse!
-        # Lengkapi profil Google user
-        completeGoogleProfile(input: CompleteGoogleProfileInput!): StandardResponse!
-
-        # Verifikasi email pengguna
-        verifyEmail(token: String!): StandardResponse!
-        resendVerificationEmail: StandardResponse!
     }
 `;
 //# sourceMappingURL=Pengguna.js.map

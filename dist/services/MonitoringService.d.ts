@@ -89,5 +89,10 @@ export declare class MonitoringService {
         message: string;
         data: HourlyUsageData | null;
     }>;
+    static getMonthlyUsage(meteranId: string | Types.ObjectId, periode: string): Promise<{
+        success: boolean;
+        message: string;
+        data: MonthlyUsageData | null;
+    }>;
 }
 //# sourceMappingURL=MonitoringService.d.ts.map
