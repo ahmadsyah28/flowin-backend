@@ -9,6 +9,8 @@ import {
   ResendOTPInput,
   UpdateProfileInput,
   UpdatePasswordInput,
+  ForgotPasswordInput,
+  ResetPasswordInput,
 } from "@/services/PenggunaService";
 
 export const penggunaResolvers = {
@@ -70,6 +72,16 @@ export const penggunaResolvers = {
     ) => {
       const user = requireAuth(context);
       return PenggunaService.updatePassword(user, input);
+    },
+
+    // Forgot password
+    forgotPassword: async (_: any, { input }: { input: ForgotPasswordInput }) => {
+      return PenggunaService.forgotPassword(input);
+    },
+
+    // Reset password
+    resetPassword: async (_: any, { input }: { input: ResetPasswordInput }) => {
+      return PenggunaService.resetPassword(input);
     },
   },
 };

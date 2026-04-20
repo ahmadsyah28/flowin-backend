@@ -27,6 +27,14 @@ export interface UpdatePasswordInput {
     currentPassword?: string;
     newPassword: string;
 }
+export interface ForgotPasswordInput {
+    email: string;
+}
+export interface ResetPasswordInput {
+    email: string;
+    otp: string;
+    newPassword: string;
+}
 export interface AuthResponse {
     success: boolean;
     message: string;
@@ -47,5 +55,7 @@ export declare class PenggunaService {
     static logout(userId: string): Promise<MutationResponse>;
     static updateProfile(userId: string, input: UpdateProfileInput): Promise<MutationResponse>;
     static updatePassword(user: IPengguna, input: UpdatePasswordInput): Promise<MutationResponse>;
+    static forgotPassword(input: ForgotPasswordInput): Promise<MutationResponse>;
+    static resetPassword(input: ResetPasswordInput): Promise<MutationResponse>;
 }
 //# sourceMappingURL=PenggunaService.d.ts.map

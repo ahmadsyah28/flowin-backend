@@ -38,6 +38,12 @@ exports.penggunaResolvers = {
             const user = (0, middlewares_1.requireAuth)(context);
             return PenggunaService_1.PenggunaService.updatePassword(user, input);
         },
+        forgotPassword: async (_, { input }) => {
+            return PenggunaService_1.PenggunaService.forgotPassword(input);
+        },
+        resetPassword: async (_, { input }) => {
+            return PenggunaService_1.PenggunaService.resetPassword(input);
+        },
     },
 };
 //# sourceMappingURL=Pengguna.js.map

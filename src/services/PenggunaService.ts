@@ -39,6 +39,16 @@ export interface UpdatePasswordInput {
   newPassword: string;
 }
 
+export interface ForgotPasswordInput {
+  email: string;
+}
+
+export interface ResetPasswordInput {
+  email: string;
+  otp: string;
+  newPassword: string;
+}
+
 // Response interfaces
 export interface AuthResponse {
   success: boolean;
@@ -381,7 +391,9 @@ export class PenggunaService {
       }
 
       // Find user by email
-      const user = await Pengguna.findOne({ email: googleUser.email.toLowerCase() });
+      const user = await Pengguna.findOne({
+        email: googleUser.email.toLowerCase(),
+      });
       if (!user) {
         return {
           success: false,
@@ -517,6 +529,129 @@ export class PenggunaService {
       return {
         success: false,
         message: error.message || "Gagal mengubah password",
+        data: null,
+      };
+    }
+  }
+
+  /**
+   * Forgot password - send OTP to registered email
+   */
+  static async forgotPassword(input: ForgotPasswordInput): Promise<MutationResponse> {
+    try {
+      if (!isValidEmail(input.email)) {
+        return {
+          success: false,
+          message: "Format email tidak valid",
+          data: null,
+        };
+      }
+
+      const user = await Pengguna.findOne({ email: input.email });
+      if (!user) {
+        return {
+          success: false,
+          message: "Email belum terdaftar, silakan lakukan pendaftaran terlebih dahulu.",
+          data: null,
+        };
+      }
+
+      if (!user.isVerified) {
+        return {
+          success: false,
+          message: "Akun belum diverifikasi. Silakan verifikasi email Anda terlebih dahulu.",
+          data: null,
+        };
+      }
+
+      // Generate OTP
+      const otp = generateOTP();
+      const otpExpiry = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes
+
+      user.otp = otp;
+      user.otpExpiry = otpExpiry;
+      await user.save();
+
+      // Send OTP email
+      await sendOTPEmail(user.email, otp, user.namaLengkap);
+
+      return {
+        success: true,
+        message: "Kode OTP telah dikirim ke email Anda untuk reset password.",
+        data: null,
+      };
+    } catch (error: any) {
+      return {
+        success: false,
+        message: error.message || "Gagal mengirim kode OTP",
+        data: null,
+      };
+    }
+  }
+
+  /**
+   * Reset password using OTP
+   */
+  static async resetPassword(input: ResetPasswordInput): Promise<MutationResponse> {
+    try {
+      if (!isValidEmail(input.email)) {
+        return {
+          success: false,
+          message: "Format email tidak valid",
+          data: null,
+        };
+      }
+
+      if (!input.newPassword || input.newPassword.length < 6) {
+        return {
+          success: false,
+          message: "Password baru minimal 6 karakter",
+          data: null,
+        };
+      }
+
+      const user = await Pengguna.findOne({ email: input.email });
+      if (!user) {
+        return {
+          success: false,
+          message: "Email tidak ditemukan",
+          data: null,
+        };
+      }
+
+      // Check OTP match
+      if (!user.otp || user.otp !== input.otp) {
+        return {
+          success: false,
+          message: "Kode OTP tidak valid",
+          data: null,
+        };
+      }
+
+      // Check OTP expiry
+      if (!user.otpExpiry || new Date() > user.otpExpiry) {
+        return {
+          success: false,
+          message: "Kode OTP telah kadaluarsa. Silakan kirim ulang.",
+          data: null,
+        };
+      }
+
+      // Update password & clear OTP
+      user.password = input.newPassword;
+      user.otp = undefined;
+      user.otpExpiry = undefined;
+      await user.save();
+
+      return {
+        success: true,
+        message: "Password berhasil direset. Silakan login dengan password baru.",
+        data: null,
+      };
+    } catch (error: any) {
+      return {
+        success: false,
+        message: error.message || "Gagal mereset password",
         data: null,
       };
     }

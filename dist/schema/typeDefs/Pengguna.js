@@ -43,6 +43,18 @@ exports.penggunaTypeDefs = `
         currentPassword: String
         newPassword: String!
     }
+
+    # Input untuk forgot password
+    input ForgotPasswordInput {
+        email: String!
+    }
+
+    # Input untuk reset password
+    input ResetPasswordInput {
+        email: String!
+        otp: String!
+        newPassword: String!
+    }
     
     # Type untuk respons auth (login/register)
     type AuthPayload {
@@ -96,6 +108,11 @@ exports.penggunaTypeDefs = `
         updateProfile(input: UpdateProfileInput!): StandardResponse!
         # Update password pengguna
         updatePassword(input: UpdatePasswordInput!): StandardResponse!
+
+        # Forgot password (kirim OTP)
+        forgotPassword(input: ForgotPasswordInput!): StandardResponse!
+        # Reset password (OTP + password baru)
+        resetPassword(input: ResetPasswordInput!): StandardResponse!
     }
 `;
 //# sourceMappingURL=Pengguna.js.map
