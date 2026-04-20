@@ -30,6 +30,10 @@ export interface UpdatePasswordInput {
 export interface ForgotPasswordInput {
     email: string;
 }
+export interface VerifyResetOTPInput {
+    email: string;
+    otp: string;
+}
 export interface ResetPasswordInput {
     email: string;
     otp: string;
@@ -56,6 +60,7 @@ export declare class PenggunaService {
     static updateProfile(userId: string, input: UpdateProfileInput): Promise<MutationResponse>;
     static updatePassword(user: IPengguna, input: UpdatePasswordInput): Promise<MutationResponse>;
     static forgotPassword(input: ForgotPasswordInput): Promise<MutationResponse>;
+    static verifyResetOTP(input: VerifyResetOTPInput): Promise<MutationResponse>;
     static resetPassword(input: ResetPasswordInput): Promise<MutationResponse>;
 }
 //# sourceMappingURL=PenggunaService.d.ts.map

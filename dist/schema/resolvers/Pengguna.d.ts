@@ -1,5 +1,5 @@
 import { GraphQLContext } from "../../types";
-import { RegisterInput, LoginInput, GoogleLoginInput, VerifyOTPInput, ResendOTPInput, UpdateProfileInput, UpdatePasswordInput, ForgotPasswordInput, ResetPasswordInput } from "../../services/PenggunaService";
+import { RegisterInput, LoginInput, GoogleLoginInput, VerifyOTPInput, ResendOTPInput, UpdateProfileInput, UpdatePasswordInput, ForgotPasswordInput, VerifyResetOTPInput, ResetPasswordInput } from "../../services/PenggunaService";
 export declare const penggunaResolvers: {
     Query: {
         me: (_: any, __: any, context: GraphQLContext) => Promise<import("../../models").IPengguna>;
@@ -29,6 +29,9 @@ export declare const penggunaResolvers: {
         }, context: GraphQLContext) => Promise<import("../../services/PenggunaService").MutationResponse>;
         forgotPassword: (_: any, { input }: {
             input: ForgotPasswordInput;
+        }) => Promise<import("../../services/PenggunaService").MutationResponse>;
+        verifyResetOTP: (_: any, { input }: {
+            input: VerifyResetOTPInput;
         }) => Promise<import("../../services/PenggunaService").MutationResponse>;
         resetPassword: (_: any, { input }: {
             input: ResetPasswordInput;

@@ -41,6 +41,9 @@ exports.penggunaResolvers = {
         forgotPassword: async (_, { input }) => {
             return PenggunaService_1.PenggunaService.forgotPassword(input);
         },
+        verifyResetOTP: async (_, { input }) => {
+            return PenggunaService_1.PenggunaService.verifyResetOTP(input);
+        },
         resetPassword: async (_, { input }) => {
             return PenggunaService_1.PenggunaService.resetPassword(input);
         },

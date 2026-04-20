@@ -405,6 +405,44 @@ class PenggunaService {
             };
         }
     }
+    static async verifyResetOTP(input) {
+        try {
+            const user = await Pengguna_1.Pengguna.findOne({ email: input.email });
+            if (!user) {
+                return {
+                    success: false,
+                    message: "Email tidak ditemukan",
+                    data: null,
+                };
+            }
+            if (!user.otp || user.otp !== input.otp) {
+                return {
+                    success: false,
+                    message: "Kode OTP tidak valid",
+                    data: null,
+                };
+            }
+            if (!user.otpExpiry || new Date() > user.otpExpiry) {
+                return {
+                    success: false,
+                    message: "Kode OTP telah kadaluarsa. Silakan kirim ulang.",
+                    data: null,
+                };
+            }
+            return {
+                success: true,
+                message: "Kode OTP valid. Silakan masukkan password baru.",
+                data: null,
+            };
+        }
+        catch (error) {
+            return {
+                success: false,
+                message: error.message || "Gagal memverifikasi kode OTP",
+                data: null,
+            };
+        }
+    }
     static async resetPassword(input) {
         try {
             if (!isValidEmail(input.email)) {

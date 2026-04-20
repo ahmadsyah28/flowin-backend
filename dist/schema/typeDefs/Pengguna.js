@@ -111,6 +111,8 @@ exports.penggunaTypeDefs = `
 
         # Forgot password (kirim OTP)
         forgotPassword(input: ForgotPasswordInput!): StandardResponse!
+        # Verifikasi OTP reset password
+        verifyResetOTP(input: VerifyOTPInput!): StandardResponse!
         # Reset password (OTP + password baru)
         resetPassword(input: ResetPasswordInput!): StandardResponse!
     }

@@ -10,6 +10,7 @@ import {
   UpdateProfileInput,
   UpdatePasswordInput,
   ForgotPasswordInput,
+  VerifyResetOTPInput,
   ResetPasswordInput,
 } from "@/services/PenggunaService";
 
@@ -75,8 +76,19 @@ export const penggunaResolvers = {
     },
 
     // Forgot password
-    forgotPassword: async (_: any, { input }: { input: ForgotPasswordInput }) => {
+    forgotPassword: async (
+      _: any,
+      { input }: { input: ForgotPasswordInput },
+    ) => {
       return PenggunaService.forgotPassword(input);
+    },
+
+    // Verify reset OTP
+    verifyResetOTP: async (
+      _: any,
+      { input }: { input: VerifyResetOTPInput },
+    ) => {
+      return PenggunaService.verifyResetOTP(input);
     },
 
     // Reset password
