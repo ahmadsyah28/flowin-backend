@@ -104,6 +104,8 @@ export class NotifikasiService {
     userId: string | Types.ObjectId,
   ): Promise<NotifikasiResponse> {
     try {
+      console.log(`🔵 [NotifikasiService] markAsRead - ID: ${id}, UserId: ${userId}`);
+      
       const notifikasi = await Notifikasi.findOneAndUpdate(
         { _id: id, IdPelanggan: userId },
         { isRead: true },
@@ -111,6 +113,7 @@ export class NotifikasiService {
       );
 
       if (!notifikasi) {
+        console.log(`🔴 [NotifikasiService] Notifikasi not found or no access`);
         return {
           success: false,
           message: "Notifikasi tidak ditemukan atau Anda tidak memiliki akses",
@@ -118,12 +121,15 @@ export class NotifikasiService {
         };
       }
 
+      console.log(`🟢 [NotifikasiService] Successfully marked as read: ${notifikasi.Judul}`);
+      
       return {
         success: true,
         message: "Notifikasi berhasil ditandai sebagai sudah dibaca",
         data: notifikasi,
       };
     } catch (error: any) {
+      console.error(`🔴 [NotifikasiService] Error:`, error);
       return {
         success: false,
         message: error.message || "Gagal menandai notifikasi sebagai sudah dibaca",
