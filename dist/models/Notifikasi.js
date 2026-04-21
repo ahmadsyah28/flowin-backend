@@ -76,6 +76,11 @@ const notifikasiSchema = new mongoose_1.Schema({
         default: null,
         trim: true,
     },
+    isRead: {
+        type: Boolean,
+        default: false,
+        index: true,
+    },
     ...BaseModel_1.baseSchemaFields,
 });
 (0, BaseModel_1.addBaseMiddleware)(notifikasiSchema);

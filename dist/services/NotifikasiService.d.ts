@@ -19,5 +19,6 @@ export interface NotifikasiListResponse {
 export declare class NotifikasiService {
     static getNotifikasiList(userId: string | Types.ObjectId, filter?: NotifikasiFilterInput): Promise<NotifikasiListResponse>;
     static getNotifikasiById(id: string | Types.ObjectId): Promise<NotifikasiResponse>;
+    static markAsRead(id: string | Types.ObjectId, userId: string | Types.ObjectId): Promise<NotifikasiResponse>;
 }
 //# sourceMappingURL=NotifikasiService.d.ts.map

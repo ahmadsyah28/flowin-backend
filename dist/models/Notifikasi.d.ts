@@ -9,6 +9,7 @@ export interface INotifikasi extends IBaseDocument {
     Pesan: string;
     Kategori: EnumNotifikasiKategori;
     Link: string | null;
+    isRead: boolean;
 }
 export declare const Notifikasi: mongoose.Model<INotifikasi, {}, {}, {}, mongoose.Document<unknown, {}, INotifikasi, {}, mongoose.DefaultSchemaOptions> & INotifikasi & Required<{
     _id: Types.ObjectId;

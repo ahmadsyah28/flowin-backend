@@ -9,6 +9,11 @@ export declare const notifikasiResolvers: {
             id: string;
         }) => Promise<import("../../services/NotifikasiService").NotifikasiResponse>;
     };
+    Mutation: {
+        markNotifikasiAsRead: (_: any, { id }: {
+            id: string;
+        }, context: GraphQLContext) => Promise<import("../../services/NotifikasiService").NotifikasiResponse>;
+    };
     Notifikasi: {
         id: (parent: any) => any;
         idPelanggan: (parent: any) => any;
@@ -18,6 +23,7 @@ export declare const notifikasiResolvers: {
         pesan: (parent: any) => any;
         kategori: (parent: any) => any;
         link: (parent: any) => any;
+        isRead: (parent: any) => any;
     };
 };
 //# sourceMappingURL=Notifikasi.d.ts.map

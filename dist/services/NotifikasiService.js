@@ -12,12 +12,16 @@ class NotifikasiService {
             const notifikasiList = await Notifikasi_1.Notifikasi.find(query).sort({
                 createdAt: -1,
             });
+            const unreadCount = await Notifikasi_1.Notifikasi.countDocuments({
+                IdPelanggan: userId,
+                isRead: false,
+            });
             return {
                 success: true,
                 message: "Berhasil mendapatkan daftar notifikasi",
                 data: notifikasiList,
                 total: notifikasiList.length,
-                unreadCount: 0,
+                unreadCount,
             };
         }
         catch (error) {
@@ -50,6 +54,30 @@ class NotifikasiService {
             return {
                 success: false,
                 message: error.message || "Gagal mendapatkan notifikasi",
+                data: null,
+            };
+        }
+    }
+    static async markAsRead(id, userId) {
+        try {
+            const notifikasi = await Notifikasi_1.Notifikasi.findOneAndUpdate({ _id: id, IdPelanggan: userId }, { isRead: true }, { new: true });
+            if (!notifikasi) {
+                return {
+                    success: false,
+                    message: "Notifikasi tidak ditemukan atau Anda tidak memiliki akses",
+                    data: null,
+                };
+            }
+            return {
+                success: true,
+                message: "Notifikasi berhasil ditandai sebagai sudah dibaca",
+                data: notifikasi,
+            };
+        }
+        catch (error) {
+            return {
+                success: false,
+                message: error.message || "Gagal menandai notifikasi sebagai sudah dibaca",
                 data: null,
             };
         }

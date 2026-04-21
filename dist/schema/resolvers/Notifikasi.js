@@ -13,6 +13,12 @@ exports.notifikasiResolvers = {
             return NotifikasiService_1.NotifikasiService.getNotifikasiById(id);
         },
     },
+    Mutation: {
+        markNotifikasiAsRead: async (_, { id }, context) => {
+            const user = (0, authMiddleware_1.requireAuth)(context);
+            return NotifikasiService_1.NotifikasiService.markAsRead(id, user._id);
+        },
+    },
     Notifikasi: {
         id: (parent) => parent._id?.toString() || parent.id,
         idPelanggan: (parent) => parent.IdPelanggan,
@@ -22,6 +28,7 @@ exports.notifikasiResolvers = {
         pesan: (parent) => parent.Pesan,
         kategori: (parent) => parent.Kategori,
         link: (parent) => parent.Link,
+        isRead: (parent) => parent.isRead || false,
     },
 };
 //# sourceMappingURL=Notifikasi.js.map
