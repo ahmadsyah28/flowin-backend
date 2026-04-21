@@ -27,8 +27,21 @@ export const notifikasiResolvers = {
       { id }: { id: string },
       context: GraphQLContext,
     ) => {
-      const user = requireAuth(context);
-      return NotifikasiService.markAsRead(id, user._id);
+      try {
+        console.log(`🔵 [Resolver] markNotifikasiAsRead called with ID: ${id}`);
+        const user = requireAuth(context);
+        console.log(`🔵 [Resolver] User ID: ${user._id}`);
+        const result = await NotifikasiService.markAsRead(id, user._id);
+        console.log(`🔵 [Resolver] Result:`, result);
+        return result;
+      } catch (error: any) {
+        console.error(`🔴 [Resolver] Error in markNotifikasiAsRead:`, error);
+        return {
+          success: false,
+          message: error.message || "Terjadi kesalahan pada server",
+          data: null,
+        };
+      }
     },
   },
 
