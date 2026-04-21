@@ -1,5 +1,5 @@
 export declare enum EnumWorkStatusPelanggan {
-    DITUNDA = "Ditunda",
+    DIAJUKAN = "Diajukan",
     DITUGASKAN = "Ditugaskan",
     DITINJAU_ADMIN = "DitinjauAdmin",
     SEDANG_DIKERJAKAN = "SedangDikerjakan",

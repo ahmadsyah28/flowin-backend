@@ -59,8 +59,6 @@ const rabSchema = new mongoose_1.Schema({
     },
     orderId: {
         type: String,
-        unique: true,
-        sparse: true,
         trim: true,
         default: null,
     },

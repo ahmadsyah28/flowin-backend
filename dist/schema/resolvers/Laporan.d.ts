@@ -10,7 +10,7 @@ export declare const laporanResolvers: {
         KENDALA_LAINNYA: EnumJenisLaporan;
     };
     WorkStatusPelanggan: {
-        DITUNDA: EnumWorkStatusPelanggan;
+        DIAJUKAN: EnumWorkStatusPelanggan;
         DITUGASKAN: EnumWorkStatusPelanggan;
         DITINJAU_ADMIN: EnumWorkStatusPelanggan;
         SEDANG_DIKERJAKAN: EnumWorkStatusPelanggan;

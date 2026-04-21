@@ -15,7 +15,7 @@ const seedLaporan = async () => {
     try {
         await (0, database_1.connectDB)();
         console.log("🔗 Connected to MongoDB for seeding laporan");
-        const users = await Pengguna_1.Pengguna.find({}, '_id namaLengkap email');
+        const users = await Pengguna_1.Pengguna.find({}, "_id namaLengkap email");
         if (users.length === 0) {
             console.log("❌ No users found. Please run seed:pengguna first!");
             process.exit(1);
@@ -29,25 +29,23 @@ const seedLaporan = async () => {
                 Alamat: "Jl. Merdeka No. 15, RT 02/RW 01, Kelurahan Sukamaju",
                 ImageURL: [
                     "https://example.com/images/laporan1_1.jpg",
-                    "https://example.com/images/laporan1_2.jpg"
+                    "https://example.com/images/laporan1_2.jpg",
                 ],
                 JenisLaporan: enums_1.EnumJenisLaporan.AIR_TIDAK_MENGALIR,
                 Catatan: "Sudah menghubungi tetangga, mereka juga mengalami masalah yang sama",
-                Status: enums_1.EnumWorkStatusPelanggan.DITUNDA,
-                coordinates: { lat: -6.2088, lng: 106.8456 }
+                Status: enums_1.EnumWorkStatusPelanggan.DIAJUKAN,
+                coordinates: { lat: -6.2088, lng: 106.8456 },
             },
             {
                 IdPengguna: users[1]._id,
                 NamaLaporan: "Air Keruh dan Berbau",
                 Masalah: "Air yang keluar dari kran berwarna keruh kecoklatan dan berbau seperti tanah. Tidak layak untuk digunakan.",
                 Alamat: "Jl. Sudirman No. 88, RT 05/RW 03, Kelurahan Makmur",
-                ImageURL: [
-                    "https://example.com/images/laporan2_1.jpg"
-                ],
+                ImageURL: ["https://example.com/images/laporan2_1.jpg"],
                 JenisLaporan: enums_1.EnumJenisLaporan.AIR_KERUH,
                 Catatan: "Air keruh mulai terlihat sejak 3 hari yang lalu",
                 Status: enums_1.EnumWorkStatusPelanggan.DITINJAU_ADMIN,
-                coordinates: { lat: -6.2148, lng: 106.8451 }
+                coordinates: { lat: -6.2148, lng: 106.8451 },
             },
             {
                 IdPengguna: users[1]._id,
@@ -57,25 +55,23 @@ const seedLaporan = async () => {
                 ImageURL: [
                     "https://example.com/images/laporan3_1.jpg",
                     "https://example.com/images/laporan3_2.jpg",
-                    "https://example.com/images/laporan3_3.jpg"
+                    "https://example.com/images/laporan3_3.jpg",
                 ],
                 JenisLaporan: enums_1.EnumJenisLaporan.KEBOCORAN_PIPA,
                 Catatan: "Kebocoran menyebabkan jalan becek dan sulit dilalui kendaraan",
                 Status: enums_1.EnumWorkStatusPelanggan.SEDANG_DIKERJAKAN,
-                coordinates: { lat: -6.2150, lng: 106.8449 }
+                coordinates: { lat: -6.215, lng: 106.8449 },
             },
             {
                 IdPengguna: users[2]._id,
                 NamaLaporan: "Meteran Air Tidak Berfungsi",
                 Masalah: "Meteran air PDAM tidak berputar sama sekali meskipun air mengalir. Khawatir tagihan tidak sesuai pemakaian.",
                 Alamat: "Jl. Gatot Subroto No. 45, RT 01/RW 02, Kelurahan Sejahtera",
-                ImageURL: [
-                    "https://example.com/images/laporan4_1.jpg"
-                ],
+                ImageURL: ["https://example.com/images/laporan4_1.jpg"],
                 JenisLaporan: enums_1.EnumJenisLaporan.METERAN_BERMASALAH,
                 Catatan: "Meteran sudah tidak bergerak sejak 2 minggu terakhir",
                 Status: enums_1.EnumWorkStatusPelanggan.DITUGASKAN,
-                coordinates: { lat: -6.2297, lng: 106.8230 }
+                coordinates: { lat: -6.2297, lng: 106.823 },
             },
             {
                 IdPengguna: users[3]._id,
@@ -86,21 +82,19 @@ const seedLaporan = async () => {
                 JenisLaporan: enums_1.EnumJenisLaporan.KENDALA_LAINNYA,
                 Catatan: "Tekanan air lemah terutama di pagi dan sore hari",
                 Status: enums_1.EnumWorkStatusPelanggan.SELESAI,
-                coordinates: { lat: -6.1783, lng: 106.8280 }
+                coordinates: { lat: -6.1783, lng: 106.828 },
             },
             {
                 IdPengguna: users[4]._id,
                 NamaLaporan: "Air Berbau Klorin Sangat Menyengat",
                 Masalah: "Air PDAM berbau klorin sangat kuat, tidak bisa digunakan untuk memasak dan minum.",
                 Alamat: "Jl. Diponegoro No. 123, RT 04/RW 02, Kelurahan Sentosa",
-                ImageURL: [
-                    "https://example.com/images/laporan6_1.jpg"
-                ],
+                ImageURL: ["https://example.com/images/laporan6_1.jpg"],
                 JenisLaporan: enums_1.EnumJenisLaporan.KENDALA_LAINNYA,
                 Catatan: "Bau klorin sangat menyengat mulai minggu lalu",
                 Status: enums_1.EnumWorkStatusPelanggan.DIBATALKAN,
-                coordinates: { lat: -6.1951, lng: 106.8313 }
-            }
+                coordinates: { lat: -6.1951, lng: 106.8313 },
+            },
         ];
         console.log("🌱 Starting to seed Laporan data...");
         let createdCount = 0;
@@ -114,7 +108,7 @@ const seedLaporan = async () => {
                 });
                 const existingLaporan = await Laporan_1.Laporan.findOne({
                     IdPengguna: data.IdPengguna,
-                    NamaLaporan: data.NamaLaporan
+                    NamaLaporan: data.NamaLaporan,
                 });
                 if (existingLaporan) {
                     console.log(`⚠️ Laporan "${data.NamaLaporan}" already exists, skipping...`);
@@ -134,9 +128,9 @@ const seedLaporan = async () => {
                     Status: data.Status,
                 });
                 await GeoLokasi_1.GeoLokasi.findByIdAndUpdate(geoLokasi._id, {
-                    IdLaporan: laporan._id
+                    IdLaporan: laporan._id,
                 });
-                const user = users.find(u => u._id.equals(data.IdPengguna));
+                const user = users.find((u) => u._id.equals(data.IdPengguna));
                 console.log(`✅ Created laporan: "${data.NamaLaporan}" by ${user?.namaLengkap} (${data.Status})`);
                 createdCount++;
             }
@@ -151,7 +145,7 @@ const seedLaporan = async () => {
         console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
         console.log("| Jenis Laporan            | Status              | User                |");
         console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-        console.log("| Air Tidak Mengalir       | Ditunda             | Admin Flowin        |");
+        console.log("| Air Tidak Mengalir       | Diajukan            | Admin Flowin        |");
         console.log("| Air Keruh                | Ditinjau Admin      | Budi Santoso        |");
         console.log("| Kebocoran Pipa           | Sedang Dikerjakan   | Budi Santoso        |");
         console.log("| Meteran Bermasalah       | Ditugaskan          | Siti Nurhaliza      |");

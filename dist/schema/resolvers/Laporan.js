@@ -13,7 +13,7 @@ exports.laporanResolvers = {
         KENDALA_LAINNYA: enums_1.EnumJenisLaporan.KENDALA_LAINNYA,
     },
     WorkStatusPelanggan: {
-        DITUNDA: enums_1.EnumWorkStatusPelanggan.DITUNDA,
+        DIAJUKAN: enums_1.EnumWorkStatusPelanggan.DIAJUKAN,
         DITUGASKAN: enums_1.EnumWorkStatusPelanggan.DITUGASKAN,
         DITINJAU_ADMIN: enums_1.EnumWorkStatusPelanggan.DITINJAU_ADMIN,
         SEDANG_DIKERJAKAN: enums_1.EnumWorkStatusPelanggan.SEDANG_DIKERJAKAN,

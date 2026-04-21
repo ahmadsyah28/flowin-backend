@@ -82,7 +82,7 @@ const laporanSchema = new mongoose_1.Schema({
     Status: {
         type: String,
         enum: Object.values(enums_1.EnumWorkStatusPelanggan),
-        default: enums_1.EnumWorkStatusPelanggan.DITUNDA,
+        default: enums_1.EnumWorkStatusPelanggan.DIAJUKAN,
         required: true,
     },
     ...BaseModel_1.baseSchemaFields,

@@ -107,7 +107,7 @@ class LaporanService {
                 JenisLaporan: input.jenisLaporan,
                 Catatan: input.catatan || "",
                 Koordinat: geoLokasi._id,
-                Status: enums_1.EnumWorkStatusPelanggan.DITUNDA,
+                Status: enums_1.EnumWorkStatusPelanggan.DIAJUKAN,
             });
             await GeoLokasi_1.GeoLokasi.findByIdAndUpdate(geoLokasi._id, {
                 IdLaporan: laporan._id,
@@ -142,7 +142,7 @@ class LaporanService {
                     data: null,
                 };
             }
-            if (laporan.Status !== enums_1.EnumWorkStatusPelanggan.DITUNDA) {
+            if (laporan.Status !== enums_1.EnumWorkStatusPelanggan.DIAJUKAN) {
                 return {
                     success: false,
                     message: "Laporan tidak dapat diubah karena sudah diproses",
