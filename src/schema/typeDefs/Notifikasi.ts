@@ -15,6 +15,7 @@ export const notifikasiTypeDefs = `
     pesan: String!
     kategori: NotifikasiKategori!
     link: String
+    isRead: Boolean!
     createdAt: Date!
     updatedAt: Date!
   }
@@ -44,5 +45,10 @@ export const notifikasiTypeDefs = `
     notifikasiList(filter: NotifikasiFilterInput): NotifikasiListResponse!
     # Mendapatkan detail notifikasi berdasarkan ID
     notifikasiById(id: ObjectId!): NotifikasiResponse!
+  }
+
+  extend type Mutation {
+    # Menandai notifikasi sebagai sudah dibaca
+    markNotifikasiAsRead(id: ObjectId!): NotifikasiResponse!
   }
 `;

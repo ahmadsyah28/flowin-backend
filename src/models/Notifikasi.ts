@@ -14,6 +14,7 @@ export interface INotifikasi extends IBaseDocument {
   Pesan: string;
   Kategori: EnumNotifikasiKategori;
   Link: string | null;
+  isRead: boolean;
 }
 
 const notifikasiSchema = new Schema<INotifikasi>({
@@ -54,6 +55,11 @@ const notifikasiSchema = new Schema<INotifikasi>({
     type: String,
     default: null,
     trim: true,
+  },
+  isRead: {
+    type: Boolean,
+    default: false,
+    index: true,
   },
   ...baseSchemaFields,
 });

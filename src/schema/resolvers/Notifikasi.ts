@@ -21,6 +21,17 @@ export const notifikasiResolvers = {
     },
   },
 
+  Mutation: {
+    markNotifikasiAsRead: async (
+      _: any,
+      { id }: { id: string },
+      context: GraphQLContext,
+    ) => {
+      const user = requireAuth(context);
+      return NotifikasiService.markAsRead(id, user._id);
+    },
+  },
+
   // Field resolvers
   Notifikasi: {
     id: (parent: any) => parent._id?.toString() || parent.id,
@@ -31,5 +42,6 @@ export const notifikasiResolvers = {
     pesan: (parent: any) => parent.Pesan,
     kategori: (parent: any) => parent.Kategori,
     link: (parent: any) => parent.Link,
+    isRead: (parent: any) => parent.isRead || false,
   },
 };
