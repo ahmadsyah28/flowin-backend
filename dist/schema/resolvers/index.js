@@ -71,6 +71,7 @@ const resolvers = {
         ...Pengguna_1.penggunaResolvers.Mutation,
         ...KoneksiData_1.koneksiDataResolvers.Mutation,
         ...Laporan_1.laporanResolvers.Mutation,
+        ...Notifikasi_1.notifikasiResolvers.Mutation,
         ...Tagihan_1.tagihanResolvers.Mutation,
         ...Pembayaran_1.pembayaranResolvers.Mutation,
         ...RAB_1.rabResolvers.Mutation,

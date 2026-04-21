@@ -115,6 +115,9 @@ const resolvers: IResolvers = {
     // Laporan mutations
     ...laporanResolvers.Mutation,
 
+    // Notifikasi mutations
+    ...notifikasiResolvers.Mutation,
+
     // Tagihan mutations
     ...tagihanResolvers.Mutation,
 
