@@ -60,14 +60,17 @@ class NotifikasiService {
     }
     static async markAsRead(id, userId) {
         try {
+            console.log(`🔵 [NotifikasiService] markAsRead - ID: ${id}, UserId: ${userId}`);
             const notifikasi = await Notifikasi_1.Notifikasi.findOneAndUpdate({ _id: id, IdPelanggan: userId }, { isRead: true }, { new: true });
             if (!notifikasi) {
+                console.log(`🔴 [NotifikasiService] Notifikasi not found or no access`);
                 return {
                     success: false,
                     message: "Notifikasi tidak ditemukan atau Anda tidak memiliki akses",
                     data: null,
                 };
             }
+            console.log(`🟢 [NotifikasiService] Successfully marked as read: ${notifikasi.Judul}`);
             return {
                 success: true,
                 message: "Notifikasi berhasil ditandai sebagai sudah dibaca",
@@ -75,6 +78,7 @@ class NotifikasiService {
             };
         }
         catch (error) {
+            console.error(`🔴 [NotifikasiService] Error:`, error);
             return {
                 success: false,
                 message: error.message || "Gagal menandai notifikasi sebagai sudah dibaca",

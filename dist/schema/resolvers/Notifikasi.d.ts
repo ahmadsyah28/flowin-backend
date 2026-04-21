@@ -12,7 +12,11 @@ export declare const notifikasiResolvers: {
     Mutation: {
         markNotifikasiAsRead: (_: any, { id }: {
             id: string;
-        }, context: GraphQLContext) => Promise<import("../../services/NotifikasiService").NotifikasiResponse>;
+        }, context: GraphQLContext) => Promise<import("../../services/NotifikasiService").NotifikasiResponse | {
+            success: boolean;
+            message: any;
+            data: null;
+        }>;
     };
     Notifikasi: {
         id: (parent: any) => any;

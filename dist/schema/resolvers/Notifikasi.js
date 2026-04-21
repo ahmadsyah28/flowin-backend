@@ -15,8 +15,22 @@ exports.notifikasiResolvers = {
     },
     Mutation: {
         markNotifikasiAsRead: async (_, { id }, context) => {
-            const user = (0, authMiddleware_1.requireAuth)(context);
-            return NotifikasiService_1.NotifikasiService.markAsRead(id, user._id);
+            try {
+                console.log(`🔵 [Resolver] markNotifikasiAsRead called with ID: ${id}`);
+                const user = (0, authMiddleware_1.requireAuth)(context);
+                console.log(`🔵 [Resolver] User ID: ${user._id}`);
+                const result = await NotifikasiService_1.NotifikasiService.markAsRead(id, user._id);
+                console.log(`🔵 [Resolver] Result:`, result);
+                return result;
+            }
+            catch (error) {
+                console.error(`🔴 [Resolver] Error in markNotifikasiAsRead:`, error);
+                return {
+                    success: false,
+                    message: error.message || "Terjadi kesalahan pada server",
+                    data: null,
+                };
+            }
         },
     },
     Notifikasi: {
