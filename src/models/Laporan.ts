@@ -76,7 +76,7 @@ const laporanSchema = new Schema<ILaporan>({
   Status: {
     type: String,
     enum: Object.values(EnumWorkStatusPelanggan),
-    default: EnumWorkStatusPelanggan.DITUNDA,
+    default: EnumWorkStatusPelanggan.DIAJUKAN,
     required: true,
   },
   ...baseSchemaFields,

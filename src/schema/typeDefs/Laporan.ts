@@ -10,7 +10,7 @@ export const laporanTypeDefs = `
 
     # Enum untuk status laporan pelanggan
     enum WorkStatusPelanggan {
-        DITUNDA
+        DIAJUKAN
         DITUGASKAN
         DITINJAU_ADMIN
         SEDANG_DIKERJAKAN
@@ -89,7 +89,7 @@ export const laporanTypeDefs = `
   extend type Mutation {
     # Membuat laporan baru
     createLaporan(input: CreateLaporanInput!): LaporanResponse!
-    # Update laporan (hanya jika status masih DITUNDA)
+    # Update laporan (hanya jika status masih DIAJUKAN)
     updateLaporan(id: ObjectId!, input: UpdateLaporanInput!): LaporanResponse!
     # Batalkan laporan
     batalkanLaporan(id: ObjectId!): LaporanResponse!

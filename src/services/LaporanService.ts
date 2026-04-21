@@ -175,7 +175,7 @@ export class LaporanService {
         JenisLaporan: input.jenisLaporan,
         Catatan: input.catatan || "",
         Koordinat: geoLokasi._id,
-        Status: EnumWorkStatusPelanggan.DITUNDA,
+        Status: EnumWorkStatusPelanggan.DIAJUKAN,
       });
 
       // Update GeoLokasi with actual Laporan ID
@@ -203,7 +203,7 @@ export class LaporanService {
   }
 
   /**
-   * Update laporan (only if status is DITUNDA)
+   * Update laporan (only if status is DIAJUKAN)
    */
   static async updateLaporan(
     id: string | Types.ObjectId,
@@ -224,7 +224,7 @@ export class LaporanService {
         };
       }
 
-      if (laporan.Status !== EnumWorkStatusPelanggan.DITUNDA) {
+      if (laporan.Status !== EnumWorkStatusPelanggan.DIAJUKAN) {
         return {
           success: false,
           message: "Laporan tidak dapat diubah karena sudah diproses",

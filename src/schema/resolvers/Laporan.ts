@@ -19,7 +19,7 @@ export const laporanResolvers = {
   },
 
   WorkStatusPelanggan: {
-    DITUNDA: EnumWorkStatusPelanggan.DITUNDA,
+    DIAJUKAN: EnumWorkStatusPelanggan.DIAJUKAN,
     DITUGASKAN: EnumWorkStatusPelanggan.DITUGASKAN,
     DITINJAU_ADMIN: EnumWorkStatusPelanggan.DITINJAU_ADMIN,
     SEDANG_DIKERJAKAN: EnumWorkStatusPelanggan.SEDANG_DIKERJAKAN,
