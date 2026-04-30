@@ -16,6 +16,8 @@ export interface ITagihan extends IBaseDocument {
     Menunggak: boolean;
     Denda: number;
     Catatan: string;
+    MidtransOrderId?: string;
+    SnapRedirectUrl?: string;
 }
 export declare const Tagihan: mongoose.Model<ITagihan, {}, {}, {}, mongoose.Document<unknown, {}, ITagihan, {}, mongoose.DefaultSchemaOptions> & ITagihan & Required<{
     _id: Types.ObjectId;

@@ -108,6 +108,17 @@ const tagihanSchema = new mongoose_1.Schema({
         default: null,
         trim: true,
     },
+    MidtransOrderId: {
+        type: String,
+        default: null,
+        trim: true,
+        sparse: true,
+    },
+    SnapRedirectUrl: {
+        type: String,
+        default: null,
+        trim: true,
+    },
     ...BaseModel_1.baseSchemaFields,
 });
 (0, BaseModel_1.addBaseMiddleware)(tagihanSchema);

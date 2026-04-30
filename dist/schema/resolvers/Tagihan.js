@@ -36,6 +36,10 @@ exports.tagihanResolvers = {
             const user = (0, authMiddleware_1.requireAuth)(context);
             return TagihanService_1.TagihanService.bayarTagihan(id, user._id, metodePembayaran);
         },
+        buatPembayaran: async (_, { tagihanId }, context) => {
+            const user = (0, authMiddleware_1.requireAuth)(context);
+            return TagihanService_1.TagihanService.createPayment(tagihanId, user._id);
+        },
     },
     Tagihan: {
         id: (parent) => parent._id?.toString() || parent.id,
@@ -53,6 +57,8 @@ exports.tagihanResolvers = {
         tenggatWaktu: (parent) => parent.TenggatWaktu,
         menunggak: (parent) => parent.Menunggak,
         denda: (parent) => parent.Denda,
+        midtransOrderId: (parent) => parent.MidtransOrderId ?? null,
+        snapRedirectUrl: (parent) => parent.SnapRedirectUrl ?? null,
     },
 };
 //# sourceMappingURL=Tagihan.js.map

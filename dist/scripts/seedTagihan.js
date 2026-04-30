@@ -12,7 +12,6 @@ const Meter_1 = require("../models/Meter");
 const KelompokPelanggan_1 = require("../models/KelompokPelanggan");
 const RiwayatPenggunaan_1 = require("../models/RiwayatPenggunaan");
 const Tagihan_1 = require("../models/Tagihan");
-const Pembayaran_1 = require("../models/Pembayaran");
 const enums_1 = require("../enums");
 const TARGET_USER_ID = "69e60f8efdcd444ac5a09972";
 const TARGET_KONEKSI_DATA_ID = "69e744561199dc7704b9d0ef";
@@ -134,49 +133,27 @@ async function main() {
             Catatan: "Tagihan bulan berjalan",
         }, { upsert: true, new: true });
         console.log(`   ✓ Tagihan Mar 2026: PENDING - Rp${biayaMar.totalBiaya.toLocaleString()} (ID: ${tagihanMar._id})`);
-        console.log("\n📍 Step 6: Buat data Pembayaran (untuk tagihan lunas)...");
-        await Pembayaran_1.Pembayaran.findOneAndUpdate({
-            IdTagihan: tagihanJan._id,
-            IdPengguna: new mongoose_1.Types.ObjectId(TARGET_USER_ID),
-        }, {
-            IdTagihan: tagihanJan._id,
-            IdPengguna: new mongoose_1.Types.ObjectId(TARGET_USER_ID),
+        console.log("\n📍 Step 6: Update tagihan lunas dengan data Midtrans...");
+        await Tagihan_1.Tagihan.findByIdAndUpdate(tagihanJan._id, {
             MidtransOrderId: `FLOWIN-JAN2026-${Date.now()}`,
-            MidtransTransactionId: `txn-sim-jan-${Date.now()}`,
-            SnapToken: "snap-token-sim-jan-2026",
             SnapRedirectUrl: "https://app.sandbox.midtrans.com/snap/v3/redirection/sim-jan",
             MetodePembayaran: "bank_transfer",
-            JumlahBayar: biayaJan.totalBiaya,
-            StatusPembayaran: Pembayaran_1.EnumStatusPembayaran.SUKSES,
-            TanggalBayar: new Date("2026-01-18T10:30:00Z"),
-        }, { upsert: true, new: true });
-        console.log(`   ✓ Pembayaran Jan 2026: Settlement - Rp${biayaJan.totalBiaya.toLocaleString()}`);
-        await Pembayaran_1.Pembayaran.findOneAndUpdate({
-            IdTagihan: tagihanFeb._id,
-            IdPengguna: new mongoose_1.Types.ObjectId(TARGET_USER_ID),
-        }, {
-            IdTagihan: tagihanFeb._id,
-            IdPengguna: new mongoose_1.Types.ObjectId(TARGET_USER_ID),
+            TanggalPembayaran: new Date("2026-01-18T10:30:00Z"),
+        });
+        console.log(`   ✓ Tagihan Jan 2026: Settlement - Rp${biayaJan.totalBiaya.toLocaleString()}`);
+        await Tagihan_1.Tagihan.findByIdAndUpdate(tagihanFeb._id, {
             MidtransOrderId: `FLOWIN-FEB2026-${Date.now()}`,
-            MidtransTransactionId: `txn-sim-feb-${Date.now()}`,
-            SnapToken: "snap-token-sim-feb-2026",
             SnapRedirectUrl: "https://app.sandbox.midtrans.com/snap/v3/redirection/sim-feb",
             MetodePembayaran: "gopay",
-            JumlahBayar: biayaFeb.totalBiaya,
-            StatusPembayaran: Pembayaran_1.EnumStatusPembayaran.SUKSES,
-            TanggalBayar: new Date("2026-02-15T14:20:00Z"),
-        }, { upsert: true, new: true });
-        console.log(`   ✓ Pembayaran Feb 2026: Settlement - Rp${biayaFeb.totalBiaya.toLocaleString()}`);
-        const tagihanCount = await Tagihan_1.Tagihan.countDocuments({ IdMeteran: meter._id });
-        const pembayaranCount = await Pembayaran_1.Pembayaran.countDocuments({
-            IdPengguna: new mongoose_1.Types.ObjectId(TARGET_USER_ID),
+            TanggalPembayaran: new Date("2026-02-15T14:20:00Z"),
         });
+        console.log(`   ✓ Tagihan Feb 2026: Settlement - Rp${biayaFeb.totalBiaya.toLocaleString()}`);
+        const tagihanCount = await Tagihan_1.Tagihan.countDocuments({ IdMeteran: meter._id });
         console.log("\n==========================================");
         console.log("     ✅ SEEDING TAGIHAN COMPLETE");
         console.log("==========================================");
         console.log(`\n📊 Ringkasan:`);
         console.log(`   Tagihan total   : ${tagihanCount}`);
-        console.log(`   Pembayaran total: ${pembayaranCount}`);
         console.log(`\n📋 Data Tagihan:`);
         console.log(`   ┌──────────────┬────────────┬──────────────────┬────────────┐`);
         console.log(`   │ Periode      │ Pemakaian  │ Total Biaya      │ Status     │`);

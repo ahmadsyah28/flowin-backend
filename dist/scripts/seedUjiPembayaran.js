@@ -11,7 +11,6 @@ const mongoose_1 = require("mongoose");
 const Meter_1 = require("../models/Meter");
 const KelompokPelanggan_1 = require("../models/KelompokPelanggan");
 const Tagihan_1 = require("../models/Tagihan");
-const Pembayaran_1 = require("../models/Pembayaran");
 const enums_1 = require("../enums");
 const TARGET_USER_ID = "69d0cb64ec09d8618dfb3c63";
 const TARGET_KONEKSI_DATA_ID = "69d0ccabec09d8618dfb3c71";
@@ -74,11 +73,7 @@ async function main() {
             Periode: newPeriode,
         });
         if (oldTagihan) {
-            await Pembayaran_1.Pembayaran.deleteMany({
-                IdTagihan: oldTagihan._id,
-                IdPengguna: new mongoose_1.Types.ObjectId(TARGET_USER_ID),
-            });
-            console.log(`🗑️  Hapus pembayaran lama untuk periode ${newPeriode}`);
+            console.log(`🗑️  Reset tagihan lama untuk periode ${newPeriode}`);
         }
         const namaBulan = [
             "",

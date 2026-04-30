@@ -30,6 +30,8 @@ exports.tagihanTypeDefs = `
         tenggatWaktu: Date!
         menunggak: Boolean!
         denda: Float!
+        midtransOrderId: String
+        snapRedirectUrl: String
         createdAt: Date!
         updatedAt: Date!
     }
@@ -56,6 +58,20 @@ exports.tagihanTypeDefs = `
         total: Int
     }
 
+    # Response untuk buat pembayaran
+    type BuatPembayaranData {
+        snapToken: String!
+        snapRedirectUrl: String!
+        midtransOrderId: String!
+        jumlahBayar: Float!
+    }
+
+    type BuatPembayaranResponse {
+        success: Boolean!
+        message: String!
+        data: BuatPembayaranData
+    }
+
     extend type Query {
         #  Mendapatkan semua tagihan pengguna
         tagihanList(filter: TagihanFilterInput): TagihanListResponse!
@@ -68,8 +84,10 @@ exports.tagihanTypeDefs = `
     }
 
     extend type Mutation {
-        # Bayar tagihan
+        # Bayar tagihan (manual, tanpa Midtrans)
         bayarTagihan(id: ObjectId!, metodePembayaran: String!): TagihanResponse!
+        # Buat pembayaran via Midtrans Snap
+        buatPembayaran(tagihanId: ObjectId!): BuatPembayaranResponse!
     }
 `;
 //# sourceMappingURL=Tagihan.js.map

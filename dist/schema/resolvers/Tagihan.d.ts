@@ -26,6 +26,9 @@ export declare const tagihanResolvers: {
             id: string;
             metodePembayaran: string;
         }, context: GraphQLContext) => Promise<import("../../services/TagihanService").TagihanResponse>;
+        buatPembayaran: (_: any, { tagihanId }: {
+            tagihanId: string;
+        }, context: GraphQLContext) => Promise<import("../../services/TagihanService").CreatePaymentResponse>;
     };
     Tagihan: {
         id: (parent: any) => any;
@@ -43,6 +46,8 @@ export declare const tagihanResolvers: {
         tenggatWaktu: (parent: any) => any;
         menunggak: (parent: any) => any;
         denda: (parent: any) => any;
+        midtransOrderId: (parent: any) => any;
+        snapRedirectUrl: (parent: any) => any;
     };
 };
 //# sourceMappingURL=Tagihan.d.ts.map

@@ -7,7 +7,6 @@ const Laporan_1 = require("./Laporan");
 const Meter_1 = require("./Meter");
 const Notifikasi_1 = require("./Notifikasi");
 const Tagihan_1 = require("./Tagihan");
-const Pembayaran_1 = require("./Pembayaran");
 const Monitoring_1 = require("./Monitoring");
 const RAB_1 = require("./RAB");
 const resolvers = {
@@ -44,12 +43,6 @@ const resolvers = {
     PaymentStatus: {
         ...Tagihan_1.tagihanResolvers.PaymentStatus,
     },
-    Pembayaran: {
-        ...Pembayaran_1.pembayaranResolvers.Pembayaran,
-    },
-    StatusPembayaran: {
-        ...Pembayaran_1.pembayaranResolvers.StatusPembayaran,
-    },
     RAB: {
         ...RAB_1.rabResolvers.RAB,
     },
@@ -62,7 +55,6 @@ const resolvers = {
         ...Meter_1.meterResolvers.Query,
         ...Notifikasi_1.notifikasiResolvers.Query,
         ...Tagihan_1.tagihanResolvers.Query,
-        ...Pembayaran_1.pembayaranResolvers.Query,
         ...Monitoring_1.monitoringResolvers.Query,
         ...RAB_1.rabResolvers.Query,
     },
@@ -73,7 +65,6 @@ const resolvers = {
         ...Laporan_1.laporanResolvers.Mutation,
         ...Notifikasi_1.notifikasiResolvers.Mutation,
         ...Tagihan_1.tagihanResolvers.Mutation,
-        ...Pembayaran_1.pembayaranResolvers.Mutation,
         ...RAB_1.rabResolvers.Mutation,
     },
     Subscription: {

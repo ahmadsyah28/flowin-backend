@@ -1,7 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = require("express");
-const PembayaranService_1 = require("../services/PembayaranService");
+const TagihanService_1 = require("../services/TagihanService");
 const RABService_1 = require("../services/RABService");
 const webhookRouter = (0, express_1.Router)();
 webhookRouter.post("/midtrans", async (req, res) => {
@@ -18,7 +18,7 @@ webhookRouter.post("/midtrans", async (req, res) => {
             result = await RABService_1.RABService.handleRABNotification(req.body);
         }
         else {
-            result = await PembayaranService_1.PembayaranService.handleMidtransNotification(req.body);
+            result = await TagihanService_1.TagihanService.handleMidtransNotification(req.body);
         }
         if (result.success) {
             console.log(`✅ Webhook processed: ${req.body?.order_id} → ${result.message}`);

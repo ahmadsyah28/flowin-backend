@@ -21,7 +21,6 @@ __exportStar(require("./LaporanService"), exports);
 __exportStar(require("./MeterService"), exports);
 __exportStar(require("./NotifikasiService"), exports);
 __exportStar(require("./TagihanService"), exports);
-__exportStar(require("./PembayaranService"), exports);
 __exportStar(require("./MonitoringService"), exports);
 __exportStar(require("./RABService"), exports);
 //# sourceMappingURL=index.js.map

@@ -9,7 +9,6 @@ const Meter_1 = require("./Meter");
 const KoneksiData_1 = require("./KoneksiData");
 const GeoLokasi_1 = require("./GeoLokasi");
 const RiwayatPenggunaan_1 = require("./RiwayatPenggunaan");
-const Pembayaran_1 = require("./Pembayaran");
 const Monitoring_1 = require("./Monitoring");
 const RAB_1 = require("./RAB");
 exports.typeDefs = `
@@ -43,7 +42,6 @@ exports.typeDefs = `
   ${KoneksiData_1.koneksiDataTypeDefs}
   ${GeoLokasi_1.geoLokasiTypeDefs}
   ${RiwayatPenggunaan_1.riwayatPenggunaanTypeDefs}
-  ${Pembayaran_1.pembayaranTypeDefs}
   ${Monitoring_1.monitoringTypeDefs}
   ${RAB_1.rabTypeDefs}
 `;

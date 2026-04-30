@@ -6,7 +6,6 @@ export { RiwayatPenggunaan, IRiwayatPenggunaan } from "./RiwayatPenggunaan";
 export { Laporan, ILaporan, ILaporanModel } from "./Laporan";
 export { GeoLokasi, IGeoLokasi } from "./GeoLokasi";
 export { Notifikasi, INotifikasi } from "./Notifikasi";
-export { Pembayaran, IPembayaran, EnumStatusPembayaran } from "./Pembayaran";
 export { KelompokPelanggan, IKelompokPelanggan, KodeKelompok, KategoriKelompok, kelompokPelangganSeed, } from "./KelompokPelanggan";
 export { RAB, IRAB, IRABDocument } from "./RAB";
 export { IBaseDocument } from "./BaseModel";
@@ -61,13 +60,6 @@ export declare const models: {
     } & {
         id: string;
     }, any, import("./Notifikasi").INotifikasi>;
-    Pembayaran: import("mongoose").Model<import("./Pembayaran").IPembayaran, {}, {}, {}, import("mongoose").Document<unknown, {}, import("./Pembayaran").IPembayaran, {}, import("mongoose").DefaultSchemaOptions> & import("./Pembayaran").IPembayaran & Required<{
-        _id: import("mongoose").Types.ObjectId;
-    }> & {
-        __v: number;
-    } & {
-        id: string;
-    }, any, import("./Pembayaran").IPembayaran>;
     KelompokPelanggan: import("mongoose").Model<import("./KelompokPelanggan").IKelompokPelanggan, {}, {}, {}, import("mongoose").Document<unknown, {}, import("./KelompokPelanggan").IKelompokPelanggan, {}, import("mongoose").DefaultSchemaOptions> & import("./KelompokPelanggan").IKelompokPelanggan & Required<{
         _id: import("mongoose").Types.ObjectId;
     }> & {
