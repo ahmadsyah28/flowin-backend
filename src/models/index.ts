@@ -7,7 +7,6 @@ export { RiwayatPenggunaan, IRiwayatPenggunaan } from "./RiwayatPenggunaan";
 export { Laporan, ILaporan, ILaporanModel } from "./Laporan";
 export { GeoLokasi, IGeoLokasi } from "./GeoLokasi";
 export { Notifikasi, INotifikasi } from "./Notifikasi";
-export { Pembayaran, IPembayaran, EnumStatusPembayaran } from "./Pembayaran";
 export {
   KelompokPelanggan,
   IKelompokPelanggan,
@@ -28,7 +27,6 @@ import { RiwayatPenggunaan } from "./RiwayatPenggunaan";
 import { Laporan } from "./Laporan";
 import { GeoLokasi } from "./GeoLokasi";
 import { Notifikasi } from "./Notifikasi";
-import { Pembayaran } from "./Pembayaran";
 import { KelompokPelanggan } from "./KelompokPelanggan";
 
 export const models = {
@@ -40,7 +38,6 @@ export const models = {
   Laporan,
   GeoLokasi,
   Notifikasi,
-  Pembayaran,
   KelompokPelanggan,
   RAB,
 };

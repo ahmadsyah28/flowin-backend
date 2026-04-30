@@ -29,7 +29,6 @@ import {
 } from "@/models/KelompokPelanggan";
 import { RiwayatPenggunaan } from "@/models/RiwayatPenggunaan";
 import { Tagihan } from "@/models/Tagihan";
-import { Pembayaran, EnumStatusPembayaran } from "@/models/Pembayaran";
 import { EnumPaymentStatus } from "@/enums";
 
 // ==========================================
@@ -260,73 +259,41 @@ async function main() {
       `   ✓ Tagihan Mar 2026: PENDING - Rp${biayaMar.totalBiaya.toLocaleString()} (ID: ${tagihanMar._id})`,
     );
 
-    // ─── Step 6: Buat Pembayaran untuk tagihan LUNAS ──────────────────
+    // ─── Step 6: Update tagihan LUNAS dengan data Midtrans ──────────────
 
-    console.log("\n📍 Step 6: Buat data Pembayaran (untuk tagihan lunas)...");
+    console.log("\n📍 Step 6: Update tagihan lunas dengan data Midtrans...");
 
-    // Pembayaran Januari
-    await Pembayaran.findOneAndUpdate(
-      {
-        IdTagihan: tagihanJan._id,
-        IdPengguna: new Types.ObjectId(TARGET_USER_ID),
-      },
-      {
-        IdTagihan: tagihanJan._id,
-        IdPengguna: new Types.ObjectId(TARGET_USER_ID),
-        MidtransOrderId: `FLOWIN-JAN2026-${Date.now()}`,
-        MidtransTransactionId: `txn-sim-jan-${Date.now()}`,
-        SnapToken: "snap-token-sim-jan-2026",
-        SnapRedirectUrl:
-          "https://app.sandbox.midtrans.com/snap/v3/redirection/sim-jan",
-        MetodePembayaran: "bank_transfer",
-        JumlahBayar: biayaJan.totalBiaya,
-        StatusPembayaran: EnumStatusPembayaran.SUKSES,
-        TanggalBayar: new Date("2026-01-18T10:30:00Z"),
-      },
-      { upsert: true, new: true },
-    );
+    // Update tagihan Januari — set MidtransOrderId langsung di Tagihan
+    await Tagihan.findByIdAndUpdate(tagihanJan._id, {
+      MidtransOrderId: `FLOWIN-JAN2026-${Date.now()}`,
+      SnapRedirectUrl: "https://app.sandbox.midtrans.com/snap/v3/redirection/sim-jan",
+      MetodePembayaran: "bank_transfer",
+      TanggalPembayaran: new Date("2026-01-18T10:30:00Z"),
+    });
     console.log(
-      `   ✓ Pembayaran Jan 2026: Settlement - Rp${biayaJan.totalBiaya.toLocaleString()}`,
+      `   ✓ Tagihan Jan 2026: Settlement - Rp${biayaJan.totalBiaya.toLocaleString()}`,
     );
 
-    // Pembayaran Februari
-    await Pembayaran.findOneAndUpdate(
-      {
-        IdTagihan: tagihanFeb._id,
-        IdPengguna: new Types.ObjectId(TARGET_USER_ID),
-      },
-      {
-        IdTagihan: tagihanFeb._id,
-        IdPengguna: new Types.ObjectId(TARGET_USER_ID),
-        MidtransOrderId: `FLOWIN-FEB2026-${Date.now()}`,
-        MidtransTransactionId: `txn-sim-feb-${Date.now()}`,
-        SnapToken: "snap-token-sim-feb-2026",
-        SnapRedirectUrl:
-          "https://app.sandbox.midtrans.com/snap/v3/redirection/sim-feb",
-        MetodePembayaran: "gopay",
-        JumlahBayar: biayaFeb.totalBiaya,
-        StatusPembayaran: EnumStatusPembayaran.SUKSES,
-        TanggalBayar: new Date("2026-02-15T14:20:00Z"),
-      },
-      { upsert: true, new: true },
-    );
+    // Update tagihan Februari
+    await Tagihan.findByIdAndUpdate(tagihanFeb._id, {
+      MidtransOrderId: `FLOWIN-FEB2026-${Date.now()}`,
+      SnapRedirectUrl: "https://app.sandbox.midtrans.com/snap/v3/redirection/sim-feb",
+      MetodePembayaran: "gopay",
+      TanggalPembayaran: new Date("2026-02-15T14:20:00Z"),
+    });
     console.log(
-      `   ✓ Pembayaran Feb 2026: Settlement - Rp${biayaFeb.totalBiaya.toLocaleString()}`,
+      `   ✓ Tagihan Feb 2026: Settlement - Rp${biayaFeb.totalBiaya.toLocaleString()}`,
     );
 
     // ─── Verify ──────────────────────────────────────────────────────
 
     const tagihanCount = await Tagihan.countDocuments({ IdMeteran: meter._id });
-    const pembayaranCount = await Pembayaran.countDocuments({
-      IdPengguna: new Types.ObjectId(TARGET_USER_ID),
-    });
 
     console.log("\n==========================================");
     console.log("     ✅ SEEDING TAGIHAN COMPLETE");
     console.log("==========================================");
     console.log(`\n📊 Ringkasan:`);
     console.log(`   Tagihan total   : ${tagihanCount}`);
-    console.log(`   Pembayaran total: ${pembayaranCount}`);
     console.log(`\n📋 Data Tagihan:`);
     console.log(
       `   ┌──────────────┬────────────┬──────────────────┬────────────┐`,

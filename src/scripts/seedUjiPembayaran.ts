@@ -28,7 +28,6 @@ import {
   IKelompokPelanggan,
 } from "@/models/KelompokPelanggan";
 import { Tagihan } from "@/models/Tagihan";
-import { Pembayaran } from "@/models/Pembayaran";
 import { EnumPaymentStatus } from "@/enums";
 
 // ==========================================
@@ -141,11 +140,7 @@ async function main() {
     });
 
     if (oldTagihan) {
-      await Pembayaran.deleteMany({
-        IdTagihan: oldTagihan._id,
-        IdPengguna: new Types.ObjectId(TARGET_USER_ID),
-      });
-      console.log(`🗑️  Hapus pembayaran lama untuk periode ${newPeriode}`);
+      console.log(`🗑️  Reset tagihan lama untuk periode ${newPeriode}`);
     }
 
     // ─── Buat/Reset tagihan PENDING ──────────────────────────────────
