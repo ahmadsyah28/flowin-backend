@@ -18,6 +18,8 @@ export interface ITagihan extends IBaseDocument {
     Catatan: string;
     MidtransOrderId?: string;
     SnapRedirectUrl?: string;
+    bulanCakupan?: number;
+    PeriodeAkhir?: string;
 }
 export declare const Tagihan: mongoose.Model<ITagihan, {}, {}, {}, mongoose.Document<unknown, {}, ITagihan, {}, mongoose.DefaultSchemaOptions> & ITagihan & Required<{
     _id: Types.ObjectId;

@@ -97,6 +97,8 @@ async function main() {
             Menunggak: false,
             Denda: 0,
             Catatan: null,
+            MidtransOrderId: `FLOWIN-JAN2026-${meter._id}`,
+            SnapRedirectUrl: "https://app.sandbox.midtrans.com/snap/v3/redirection/sim-jan",
         }, { upsert: true, new: true });
         console.log(`   ✓ Tagihan Jan 2026: LUNAS - Rp${biayaJan.totalBiaya.toLocaleString()} (ID: ${tagihanJan._id})`);
         const tagihanFeb = await Tagihan_1.Tagihan.findOneAndUpdate({ IdMeteran: meter._id, Periode: "2026-02" }, {
@@ -114,6 +116,8 @@ async function main() {
             Menunggak: false,
             Denda: 0,
             Catatan: null,
+            MidtransOrderId: `FLOWIN-FEB2026-${meter._id}`,
+            SnapRedirectUrl: "https://app.sandbox.midtrans.com/snap/v3/redirection/sim-feb",
         }, { upsert: true, new: true });
         console.log(`   ✓ Tagihan Feb 2026: LUNAS - Rp${biayaFeb.totalBiaya.toLocaleString()} (ID: ${tagihanFeb._id})`);
         const tagihanMar = await Tagihan_1.Tagihan.findOneAndUpdate({ IdMeteran: meter._id, Periode: "2026-03" }, {
@@ -131,23 +135,10 @@ async function main() {
             Menunggak: false,
             Denda: 0,
             Catatan: "Tagihan bulan berjalan",
+            MidtransOrderId: null,
+            SnapRedirectUrl: null,
         }, { upsert: true, new: true });
         console.log(`   ✓ Tagihan Mar 2026: PENDING - Rp${biayaMar.totalBiaya.toLocaleString()} (ID: ${tagihanMar._id})`);
-        console.log("\n📍 Step 6: Update tagihan lunas dengan data Midtrans...");
-        await Tagihan_1.Tagihan.findByIdAndUpdate(tagihanJan._id, {
-            MidtransOrderId: `FLOWIN-JAN2026-${Date.now()}`,
-            SnapRedirectUrl: "https://app.sandbox.midtrans.com/snap/v3/redirection/sim-jan",
-            MetodePembayaran: "bank_transfer",
-            TanggalPembayaran: new Date("2026-01-18T10:30:00Z"),
-        });
-        console.log(`   ✓ Tagihan Jan 2026: Settlement - Rp${biayaJan.totalBiaya.toLocaleString()}`);
-        await Tagihan_1.Tagihan.findByIdAndUpdate(tagihanFeb._id, {
-            MidtransOrderId: `FLOWIN-FEB2026-${Date.now()}`,
-            SnapRedirectUrl: "https://app.sandbox.midtrans.com/snap/v3/redirection/sim-feb",
-            MetodePembayaran: "gopay",
-            TanggalPembayaran: new Date("2026-02-15T14:20:00Z"),
-        });
-        console.log(`   ✓ Tagihan Feb 2026: Settlement - Rp${biayaFeb.totalBiaya.toLocaleString()}`);
         const tagihanCount = await Tagihan_1.Tagihan.countDocuments({ IdMeteran: meter._id });
         console.log("\n==========================================");
         console.log("     ✅ SEEDING TAGIHAN COMPLETE");

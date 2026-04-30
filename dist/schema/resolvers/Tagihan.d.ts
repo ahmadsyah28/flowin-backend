@@ -46,6 +46,8 @@ export declare const tagihanResolvers: {
         denda: (parent: any) => any;
         midtransOrderId: (parent: any) => any;
         snapRedirectUrl: (parent: any) => any;
+        bulanCakupan: (parent: any) => any;
+        periodeAkhir: (parent: any) => any;
     };
 };
 //# sourceMappingURL=Tagihan.d.ts.map

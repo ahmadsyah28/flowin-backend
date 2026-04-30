@@ -119,6 +119,16 @@ const tagihanSchema = new mongoose_1.Schema({
         default: null,
         trim: true,
     },
+    bulanCakupan: {
+        type: Number,
+        default: 1,
+        min: [1, "Bulan cakupan minimal 1"],
+    },
+    PeriodeAkhir: {
+        type: String,
+        default: null,
+        trim: true,
+    },
     ...BaseModel_1.baseSchemaFields,
 });
 (0, BaseModel_1.addBaseMiddleware)(tagihanSchema);

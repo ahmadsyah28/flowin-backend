@@ -59,6 +59,8 @@ exports.tagihanResolvers = {
         denda: (parent) => parent.Denda,
         midtransOrderId: (parent) => parent.MidtransOrderId ?? null,
         snapRedirectUrl: (parent) => parent.SnapRedirectUrl ?? null,
+        bulanCakupan: (parent) => parent.bulanCakupan ?? 1,
+        periodeAkhir: (parent) => parent.PeriodeAkhir ?? null,
     },
 };
 //# sourceMappingURL=Tagihan.js.map
