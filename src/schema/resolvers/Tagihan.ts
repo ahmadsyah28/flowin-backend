@@ -74,5 +74,7 @@ export const tagihanResolvers = {
     denda: (parent: any) => parent.Denda,
     midtransOrderId: (parent: any) => parent.MidtransOrderId ?? null,
     snapRedirectUrl: (parent: any) => parent.SnapRedirectUrl ?? null,
+    bulanCakupan: (parent: any) => parent.bulanCakupan ?? 1,
+    periodeAkhir: (parent: any) => parent.PeriodeAkhir ?? null,
   },
 };

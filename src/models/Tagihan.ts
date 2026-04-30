@@ -23,6 +23,8 @@ export interface ITagihan extends IBaseDocument {
   Catatan: string;
   MidtransOrderId?: string;
   SnapRedirectUrl?: string;
+  bulanCakupan?: number;
+  PeriodeAkhir?: string;
 }
 
 const tagihanSchema = new Schema<ITagihan>({
@@ -103,6 +105,16 @@ const tagihanSchema = new Schema<ITagihan>({
     sparse: true,
   },
   SnapRedirectUrl: {
+    type: String,
+    default: null,
+    trim: true,
+  },
+  bulanCakupan: {
+    type: Number,
+    default: 1,
+    min: [1, "Bulan cakupan minimal 1"],
+  },
+  PeriodeAkhir: {
     type: String,
     default: null,
     trim: true,

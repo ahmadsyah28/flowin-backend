@@ -29,6 +29,8 @@ export const tagihanTypeDefs = `
         denda: Float!
         midtransOrderId: String
         snapRedirectUrl: String
+        bulanCakupan: Int!
+        periodeAkhir: String
         createdAt: Date!
         updatedAt: Date!
     }
