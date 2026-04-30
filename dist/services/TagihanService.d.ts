@@ -43,7 +43,7 @@ export declare class TagihanService {
     static getTagihanRiwayat(userId: string | Types.ObjectId): Promise<TagihanListResponse>;
     static bayarTagihan(id: string | Types.ObjectId, userId: string | Types.ObjectId, metodePembayaran: string): Promise<TagihanResponse>;
     private static generateOrderId;
-    static createPayment(tagihanId: string, userId: string | Types.ObjectId): Promise<CreatePaymentResponse>;
+    static createPayment(userId: string | Types.ObjectId): Promise<CreatePaymentResponse>;
     private static mapMidtransStatus;
     static handleMidtransNotification(notificationBody: any): Promise<{
         success: boolean;

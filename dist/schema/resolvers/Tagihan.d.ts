@@ -26,9 +26,7 @@ export declare const tagihanResolvers: {
             id: string;
             metodePembayaran: string;
         }, context: GraphQLContext) => Promise<import("../../services/TagihanService").TagihanResponse>;
-        buatPembayaran: (_: any, { tagihanId }: {
-            tagihanId: string;
-        }, context: GraphQLContext) => Promise<import("../../services/TagihanService").CreatePaymentResponse>;
+        buatPembayaran: (_: any, __: any, context: GraphQLContext) => Promise<import("../../services/TagihanService").CreatePaymentResponse>;
     };
     Tagihan: {
         id: (parent: any) => any;

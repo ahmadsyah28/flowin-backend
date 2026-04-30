@@ -36,9 +36,9 @@ exports.tagihanResolvers = {
             const user = (0, authMiddleware_1.requireAuth)(context);
             return TagihanService_1.TagihanService.bayarTagihan(id, user._id, metodePembayaran);
         },
-        buatPembayaran: async (_, { tagihanId }, context) => {
+        buatPembayaran: async (_, __, context) => {
             const user = (0, authMiddleware_1.requireAuth)(context);
-            return TagihanService_1.TagihanService.createPayment(tagihanId, user._id);
+            return TagihanService_1.TagihanService.createPayment(user._id);
         },
     },
     Tagihan: {
