@@ -303,9 +303,12 @@ async function getRedisMonthlyUsage(
     // Ambil total dari Redis String
     const totalStr = await getRedisData(totalKey);
     // Upstash may return a number directly if stored as numeric
-    const total = totalStr !== null && totalStr !== undefined
-      ? (typeof totalStr === "number" ? totalStr : parseFloat(totalStr as string))
-      : 0;
+    const total =
+      totalStr !== null && totalStr !== undefined
+        ? typeof totalStr === "number"
+          ? totalStr
+          : parseFloat(totalStr as string)
+        : 0;
 
     // Jika tidak ada data sama sekali, return null
     if (!dailyData && (totalStr === null || totalStr === undefined)) {

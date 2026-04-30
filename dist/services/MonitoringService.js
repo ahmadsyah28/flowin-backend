@@ -51,8 +51,12 @@ async function getRedisMonthlyUsage(meteranId, periode) {
         const totalKey = `usage:${meteranId}:${periode}:total`;
         const dailyData = await (0, redis_1.hgetall)(dailyKey);
         const totalStr = await (0, redis_1.getRedisData)(totalKey);
-        const total = totalStr ? parseFloat(totalStr) : 0;
-        if (!dailyData && !totalStr) {
+        const total = totalStr !== null && totalStr !== undefined
+            ? typeof totalStr === "number"
+                ? totalStr
+                : parseFloat(totalStr)
+            : 0;
+        if (!dailyData && (totalStr === null || totalStr === undefined)) {
             return null;
         }
         const dataHarian = {};
@@ -81,7 +85,7 @@ async function getLatestReading(meteranId) {
         if (!data) {
             return null;
         }
-        const parsed = JSON.parse(data);
+        const parsed = typeof data === "string" ? JSON.parse(data) : data;
         return {
             volume: parsed.volume || 0,
             timestamp: parsed.timestamp || new Date().toISOString(),
