@@ -302,10 +302,13 @@ async function getRedisMonthlyUsage(
 
     // Ambil total dari Redis String
     const totalStr = await getRedisData(totalKey);
-    const total = totalStr ? parseFloat(totalStr) : 0;
+    // Upstash may return a number directly if stored as numeric
+    const total = totalStr !== null && totalStr !== undefined
+      ? (typeof totalStr === "number" ? totalStr : parseFloat(totalStr as string))
+      : 0;
 
     // Jika tidak ada data sama sekali, return null
-    if (!dailyData && !totalStr) {
+    if (!dailyData && (totalStr === null || totalStr === undefined)) {
       return null;
     }
 
@@ -350,8 +353,8 @@ async function getLatestReading(
       return null;
     }
 
-    // Parse JSON string
-    const parsed = JSON.parse(data);
+    // Upstash REST client auto-deserializes JSON, so data may already be an object
+    const parsed: any = typeof data === "string" ? JSON.parse(data) : data;
     return {
       volume: parsed.volume || 0,
       timestamp: parsed.timestamp || new Date().toISOString(),

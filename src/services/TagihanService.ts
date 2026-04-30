@@ -59,7 +59,10 @@ export class TagihanService {
         };
       }
 
-      const query: any = { IdMeteran: { $in: meterIds } };
+      const query: any = {
+        IdMeteran: { $in: meterIds },
+        StatusPembayaran: { $in: Object.values(EnumPaymentStatus) },
+      };
 
       if (filter?.idMeteran) {
         query.IdMeteran = filter.idMeteran;

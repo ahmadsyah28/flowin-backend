@@ -28,7 +28,7 @@ import { getRedisClient } from "@/config/redis";
 // ==========================================
 
 // ⚠️  ISI DENGAN METEOR ID DARI OUTPUT seedMonitoringMongo.ts
-const TARGET_METER_ID = "69e0e35e2a3d8e78e7049b5c";
+const TARGET_METER_ID = "69e9b5cea72a0f6311c3e2a2";
 
 const CURRENT_MONTH = "2026-04";
 
@@ -118,7 +118,7 @@ async function main() {
     const dataPerJamPerHari: Record<string, Record<string, number>> = {};
     let total = 0;
 
-    for (let day = 1; day <= 17; day++) {
+    for (let day = 1; day <= 23; day++) {
       const dayStr = day.toString().padStart(2, "0");
       const dailyUsage = randomDailyUsage();
 
@@ -131,7 +131,7 @@ async function main() {
     }
 
     total = Math.round(total * 10) / 10;
-    console.log(`   ✓ 17 hari, total: ${total} liter`);
+    console.log(`   ✓ 23 hari, total: ${total} liter`);
 
     // ─── Seed data harian ─────────────────────────────────────────────
 
@@ -164,16 +164,16 @@ async function main() {
     // ─── Seed data latest ─────────────────────────────────────────────
 
     console.log("\n📍 Menyimpan latest reading...");
-    const lastDayHourly = dataPerJamPerHari[`${CURRENT_MONTH}-13`] ?? {};
+    const lastDayHourly = dataPerJamPerHari[`${CURRENT_MONTH}-23`] ?? {};
     const latestReading = lastDayHourly["14"] ?? 0;
     const latestData = {
       volume: latestReading,
-      timestamp: new Date("2026-04-17T14:30:00").toISOString(),
+      timestamp: new Date("2026-04-23T14:30:00").toISOString(),
       meteranId: TARGET_METER_ID,
     };
     await redis.set(latestKey, JSON.stringify(latestData));
     console.log(
-      `   ✓ Key: ${latestKey} (${latestReading} liter @ 2026-04-17 14:30)`,
+      `   ✓ Key: ${latestKey} (${latestReading} liter @ 2026-04-23 14:30)`,
     );
 
     // ─── Set TTL 45 hari ──────────────────────────────────────────────
