@@ -316,11 +316,11 @@ export class TagihanService {
   }
 
   /**
-   * Buat pembayaran via Midtrans Snap
-   * Menyimpan MidtransOrderId & SnapRedirectUrl langsung ke dokumen Tagihan
+   * Buat pembayaran via Midtrans Snap untuk SEMUA tagihan belum bayar user.
+   * Seluruh tagihan pending/expire digabung dalam satu transaksi Midtrans,
+   * dan masing-masing tagihan mendapat MidtransOrderId & SnapRedirectUrl yang sama.
    */
   static async createPayment(
-    tagihanId: string,
     userId: string | Types.ObjectId,
   ): Promise<CreatePaymentResponse> {
     try {
@@ -334,78 +334,88 @@ export class TagihanService {
         };
       }
 
-      // 2. Ambil tagihan dan verifikasi kepemilikan
+      // 2. Ambil semua tagihan belum bayar milik user
       const meterIds = await this.getUserMeterIds(userId);
-      const tagihan = await Tagihan.findOne({
-        _id: tagihanId,
+      if (meterIds.length === 0) {
+        return {
+          success: false,
+          message: "Tidak ada meteran terdaftar",
+          data: null,
+        };
+      }
+
+      const tagihanList = await Tagihan.find({
         IdMeteran: { $in: meterIds },
-      });
+        StatusPembayaran: {
+          $in: [EnumPaymentStatus.PENDING, EnumPaymentStatus.EXPIRE],
+        },
+      }).sort({ TenggatWaktu: 1 });
 
-      if (!tagihan) {
+      if (tagihanList.length === 0) {
         return {
           success: false,
-          message: "Tagihan tidak ditemukan atau bukan milik Anda",
+          message: "Tidak ada tagihan yang belum dibayar",
           data: null,
         };
       }
 
-      // 3. Cek status tagihan
-      if (tagihan.StatusPembayaran === EnumPaymentStatus.SETTLEMENT) {
-        return {
-          success: false,
-          message: "Tagihan ini sudah lunas",
-          data: null,
-        };
-      }
+      // 3. Jika semua tagihan sudah punya orderId yang sama → kembalikan yang lama
+      const firstOrderId = tagihanList[0].MidtransOrderId;
+      const firstRedirectUrl = tagihanList[0].SnapRedirectUrl;
+      const allSameOrder =
+        firstOrderId &&
+        firstRedirectUrl &&
+        tagihanList.every((t) => t.MidtransOrderId === firstOrderId);
 
-      // 4. Jika sudah ada order pending, kembalikan yang lama
-      if (
-        tagihan.MidtransOrderId &&
-        tagihan.SnapRedirectUrl &&
-        tagihan.StatusPembayaran === EnumPaymentStatus.PENDING
-      ) {
+      if (allSameOrder) {
+        const totalBayar = tagihanList.reduce(
+          (sum, t) => sum + t.TotalBiaya,
+          0,
+        );
         return {
           success: true,
           message: "Pembayaran sudah dibuat sebelumnya, silakan lanjutkan",
           data: {
-            snapToken: tagihan.MidtransOrderId,
-            snapRedirectUrl: tagihan.SnapRedirectUrl,
-            midtransOrderId: tagihan.MidtransOrderId,
-            jumlahBayar: tagihan.TotalBiaya,
+            snapToken: firstOrderId!,
+            snapRedirectUrl: firstRedirectUrl!,
+            midtransOrderId: firstOrderId!,
+            jumlahBayar: totalBayar,
           },
         };
       }
 
-      // 5. Buat item details
+      // 4. Bangun item_details dari semua tagihan
       const orderId = this.generateOrderId();
-      const itemDetails: any[] = [
-        {
+      const itemDetails: any[] = [];
+
+      for (const tagihan of tagihanList) {
+        itemDetails.push({
           id: tagihan._id.toString(),
           price: Math.round(tagihan.Biaya),
           quantity: 1,
           name: `Tagihan Air - ${tagihan.Periode}`,
-        },
-      ];
-
-      if (tagihan.Denda && tagihan.Denda > 0) {
-        itemDetails.push({
-          id: `denda-${tagihan._id.toString()}`,
-          price: Math.round(tagihan.Denda),
-          quantity: 1,
-          name: `Denda Keterlambatan - ${tagihan.Periode}`,
         });
-      }
 
-      const biayaBeban = Math.round(
-        tagihan.TotalBiaya - tagihan.Biaya - (tagihan.Denda || 0),
-      );
-      if (biayaBeban > 0) {
-        itemDetails.push({
-          id: `beban-${tagihan._id.toString()}`,
-          price: biayaBeban,
-          quantity: 1,
-          name: `Biaya Beban - ${tagihan.Periode}`,
-        });
+        if (tagihan.Denda && tagihan.Denda > 0) {
+          itemDetails.push({
+            id: `denda-${tagihan._id.toString()}`,
+            price: Math.round(tagihan.Denda),
+            quantity: 1,
+            name: `Denda Keterlambatan - ${tagihan.Periode}`,
+          });
+        }
+
+        const biayaBeban = Math.round(
+          tagihan.TotalBiaya - tagihan.Biaya - (tagihan.Denda || 0),
+        );
+        if (biayaBeban > 0) {
+          itemDetails.push({
+            id: `beban-${tagihan._id.toString()}`,
+            price: biayaBeban,
+            quantity: 1,
+            name: `Biaya Beban - ${tagihan.Periode}`,
+          });
+        }
       }
 
       const grossAmount = itemDetails.reduce(
@@ -413,7 +423,7 @@ export class TagihanService {
         0,
       );
 
-      // 6. Buat transaksi di Midtrans
+      // 5. Buat satu transaksi di Midtrans
       const midtransResponse = await snap.createTransaction({
         transaction_details: { order_id: orderId, gross_amount: grossAmount },
         item_details: itemDetails,
@@ -429,10 +439,15 @@ export class TagihanService {
         },
       } as any);
 
-      // 7. Simpan ke dokumen Tagihan
-      tagihan.MidtransOrderId = orderId;
-      tagihan.SnapRedirectUrl = midtransResponse.redirect_url;
-      await tagihan.save();
+      // 6. Simpan orderId & redirectUrl yang SAMA ke semua tagihan
+      const tagihanIds = tagihanList.map((t) => t._id);
+      await Tagihan.updateMany(
+        { _id: { $in: tagihanIds } },
+        {
+          MidtransOrderId: orderId,
+          SnapRedirectUrl: midtransResponse.redirect_url,
+        },
+      );
 
       return {
         success: true,
@@ -441,7 +456,7 @@ export class TagihanService {
           snapToken: midtransResponse.token,
           snapRedirectUrl: midtransResponse.redirect_url,
           midtransOrderId: orderId,
-          jumlahBayar: tagihan.TotalBiaya,
+          jumlahBayar: grossAmount,
         },
       };
     } catch (error: any) {
@@ -492,9 +507,9 @@ export class TagihanService {
         payment_type,
       } = statusResponse;
 
-      // Cari tagihan berdasarkan MidtransOrderId
-      const tagihan = await Tagihan.findOne({ MidtransOrderId: order_id });
-      if (!tagihan) {
+      // Cari SEMUA tagihan dengan MidtransOrderId ini
+      const tagihanList = await Tagihan.find({ MidtransOrderId: order_id });
+      if (tagihanList.length === 0) {
         return {
           success: false,
           message: `Tagihan dengan order ID ${order_id} tidak ditemukan`,
@@ -505,29 +520,41 @@ export class TagihanService {
         transaction_status,
         fraud_status,
       );
-      tagihan.StatusPembayaran = newStatus;
 
+      // Update semua tagihan dengan status yang sama
+      for (const tagihan of tagihanList) {
+        tagihan.StatusPembayaran = newStatus;
+
+        if (newStatus === EnumPaymentStatus.SETTLEMENT) {
+          tagihan.TanggalPembayaran = new Date();
+          tagihan.MetodePembayaran = payment_type;
+        }
+
+        await tagihan.save();
+      }
+
+      // Kirim notifikasi sekali (berdasarkan tagihan pertama)
       if (newStatus === EnumPaymentStatus.SETTLEMENT) {
-        tagihan.TanggalPembayaran = new Date();
-        tagihan.MetodePembayaran = payment_type;
-
-        // Kirim notifikasi ke user
-        const meter = await Meter.findById(tagihan.IdMeteran);
+        const firstTagihan = tagihanList[0];
+        const meter = await Meter.findById(firstTagihan.IdMeteran);
         const koneksiData = meter
           ? await KoneksiData.findById(meter.IdKoneksiData)
           : null;
         if (koneksiData) {
+          const totalBayar = tagihanList.reduce(
+            (sum, t) => sum + t.TotalBiaya,
+            0,
+          );
+          const periodeList = tagihanList.map((t) => t.Periode).join(", ");
           await Notifikasi.create({
             IdPelanggan: koneksiData.IdPelanggan,
             Judul: "Pembayaran Berhasil",
-            Pesan: `Pembayaran tagihan periode ${tagihan.Periode} sebesar Rp ${tagihan.TotalBiaya.toLocaleString("id-ID")} telah berhasil.`,
+            Pesan: `Pembayaran tagihan periode ${periodeList} sebesar Rp ${totalBayar.toLocaleString("id-ID")} telah berhasil.`,
             Kategori: EnumNotifikasiKategori.PEMBAYARAN,
             isRead: false,
           });
         }
       }
-
-      await tagihan.save();
 
       return {
         success: true,

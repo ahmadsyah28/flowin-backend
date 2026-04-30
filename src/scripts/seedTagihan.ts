@@ -266,7 +266,8 @@ async function main() {
     // Update tagihan Januari — set MidtransOrderId langsung di Tagihan
     await Tagihan.findByIdAndUpdate(tagihanJan._id, {
       MidtransOrderId: `FLOWIN-JAN2026-${Date.now()}`,
-      SnapRedirectUrl: "https://app.sandbox.midtrans.com/snap/v3/redirection/sim-jan",
+      SnapRedirectUrl:
+        "https://app.sandbox.midtrans.com/snap/v3/redirection/sim-jan",
       MetodePembayaran: "bank_transfer",
       TanggalPembayaran: new Date("2026-01-18T10:30:00Z"),
     });
@@ -277,7 +278,8 @@ async function main() {
     // Update tagihan Februari
     await Tagihan.findByIdAndUpdate(tagihanFeb._id, {
       MidtransOrderId: `FLOWIN-FEB2026-${Date.now()}`,
-      SnapRedirectUrl: "https://app.sandbox.midtrans.com/snap/v3/redirection/sim-feb",
+      SnapRedirectUrl:
+        "https://app.sandbox.midtrans.com/snap/v3/redirection/sim-feb",
       MetodePembayaran: "gopay",
       TanggalPembayaran: new Date("2026-02-15T14:20:00Z"),
     });

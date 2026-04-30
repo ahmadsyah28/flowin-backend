@@ -83,7 +83,7 @@ export const tagihanTypeDefs = `
     extend type Mutation {
         # Bayar tagihan (manual, tanpa Midtrans)
         bayarTagihan(id: ObjectId!, metodePembayaran: String!): TagihanResponse!
-        # Buat pembayaran via Midtrans Snap
-        buatPembayaran(tagihanId: ObjectId!): BuatPembayaranResponse!
+        # Buat pembayaran via Midtrans Snap untuk semua tagihan belum bayar
+        buatPembayaran: BuatPembayaranResponse!
     }
 `;

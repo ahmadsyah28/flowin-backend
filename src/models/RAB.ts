@@ -40,7 +40,7 @@ const rabSchema = new Schema<IRABDocument>(
       default: EnumPaymentStatus.PENDING,
     },
 
-    // Midtrans: order ID unik per transaksi
+    // Midtrans: order ID  per transaksi
     orderId: {
       type: String,
       trim: true,

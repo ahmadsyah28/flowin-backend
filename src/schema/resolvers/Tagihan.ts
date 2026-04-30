@@ -49,13 +49,9 @@ export const tagihanResolvers = {
       return TagihanService.bayarTagihan(id, user._id, metodePembayaran);
     },
 
-    buatPembayaran: async (
-      _: any,
-      { tagihanId }: { tagihanId: string },
-      context: GraphQLContext,
-    ) => {
+    buatPembayaran: async (_: any, __: any, context: GraphQLContext) => {
       const user = requireAuth(context);
-      return TagihanService.createPayment(tagihanId, user._id);
+      return TagihanService.createPayment(user._id);
     },
   },
 
