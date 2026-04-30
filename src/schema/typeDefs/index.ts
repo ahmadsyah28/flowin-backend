@@ -6,7 +6,6 @@ import { meterTypeDefs } from "./Meter";
 import { koneksiDataTypeDefs } from "./KoneksiData";
 import { geoLokasiTypeDefs } from "./GeoLokasi";
 import { riwayatPenggunaanTypeDefs } from "./RiwayatPenggunaan";
-import { pembayaranTypeDefs } from "./Pembayaran";
 import { monitoringTypeDefs } from "./Monitoring";
 import { rabTypeDefs } from "./RAB";
 
@@ -41,7 +40,6 @@ export const typeDefs = `
   ${koneksiDataTypeDefs}
   ${geoLokasiTypeDefs}
   ${riwayatPenggunaanTypeDefs}
-  ${pembayaranTypeDefs}
   ${monitoringTypeDefs}
   ${rabTypeDefs}
 `;

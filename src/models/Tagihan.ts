@@ -21,6 +21,8 @@ export interface ITagihan extends IBaseDocument {
   Menunggak: boolean;
   Denda: number;
   Catatan: string;
+  MidtransOrderId?: string;
+  SnapRedirectUrl?: string;
 }
 
 const tagihanSchema = new Schema<ITagihan>({
@@ -90,6 +92,17 @@ const tagihanSchema = new Schema<ITagihan>({
     min: [0, "Denda cannot be negative"],
   },
   Catatan: {
+    type: String,
+    default: null,
+    trim: true,
+  },
+  MidtransOrderId: {
+    type: String,
+    default: null,
+    trim: true,
+    sparse: true,
+  },
+  SnapRedirectUrl: {
     type: String,
     default: null,
     trim: true,

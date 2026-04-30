@@ -2,7 +2,6 @@ import { GraphQLContext } from "@/types";
 import { requireAuth } from "@/utils/authMiddleware";
 import { TagihanService, TagihanFilterInput } from "@/services/TagihanService";
 import { EnumPaymentStatus } from "@/enums";
-
 export const tagihanResolvers = {
   // Mapping GraphQL enum ↔ nilai di database
   PaymentStatus: {
@@ -49,13 +48,22 @@ export const tagihanResolvers = {
       const user = requireAuth(context);
       return TagihanService.bayarTagihan(id, user._id, metodePembayaran);
     },
+
+    buatPembayaran: async (
+      _: any,
+      { tagihanId }: { tagihanId: string },
+      context: GraphQLContext,
+    ) => {
+      const user = requireAuth(context);
+      return TagihanService.createPayment(tagihanId, user._id);
+    },
   },
 
   // Field resolvers
   Tagihan: {
     id: (parent: any) => parent._id?.toString() || parent.id,
     idMeteran: (parent: any) => parent.IdMeteran,
-    meteran: (parent: any) => parent.IdMeteran, // populated
+    meteran: (parent: any) => parent.IdMeteran,
     periode: (parent: any) => parent.Periode,
     penggunaanSebelum: (parent: any) => parent.PenggunaanSebelum,
     penggunaanSesudah: (parent: any) => parent.PenggunaanSekarang,
@@ -68,5 +76,7 @@ export const tagihanResolvers = {
     tenggatWaktu: (parent: any) => parent.TenggatWaktu,
     menunggak: (parent: any) => parent.Menunggak,
     denda: (parent: any) => parent.Denda,
+    midtransOrderId: (parent: any) => parent.MidtransOrderId ?? null,
+    snapRedirectUrl: (parent: any) => parent.SnapRedirectUrl ?? null,
   },
 };

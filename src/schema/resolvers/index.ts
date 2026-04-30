@@ -6,7 +6,6 @@ import { laporanResolvers } from "./Laporan";
 import { meterResolvers } from "./Meter";
 import { notifikasiResolvers } from "./Notifikasi";
 import { tagihanResolvers } from "./Tagihan";
-import { pembayaranResolvers } from "./Pembayaran";
 import { monitoringResolvers } from "./Monitoring";
 import { rabResolvers } from "./RAB";
 
@@ -57,14 +56,6 @@ const resolvers: IResolvers = {
     ...tagihanResolvers.PaymentStatus,
   },
 
-  Pembayaran: {
-    ...pembayaranResolvers.Pembayaran,
-  },
-
-  StatusPembayaran: {
-    ...pembayaranResolvers.StatusPembayaran,
-  },
-
   RAB: {
     ...rabResolvers.RAB,
   },
@@ -93,9 +84,6 @@ const resolvers: IResolvers = {
     // Tagihan queries
     ...tagihanResolvers.Query,
 
-    // Pembayaran queries
-    ...pembayaranResolvers.Query,
-
     // Monitoring queries
     ...monitoringResolvers.Query,
 
@@ -120,9 +108,6 @@ const resolvers: IResolvers = {
 
     // Tagihan mutations
     ...tagihanResolvers.Mutation,
-
-    // Pembayaran mutations
-    ...pembayaranResolvers.Mutation,
 
     // RAB mutations
     ...rabResolvers.Mutation,

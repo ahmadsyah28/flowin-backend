@@ -1,5 +1,5 @@
 import { Router, Request, Response } from "express";
-import { PembayaranService } from "@/services/PembayaranService";
+import { TagihanService } from "@/services/TagihanService";
 import { RABService } from "@/services/RABService";
 
 const webhookRouter = Router();
@@ -37,7 +37,7 @@ webhookRouter.post(
       if (isRABPayment) {
         result = await RABService.handleRABNotification(req.body);
       } else {
-        result = await PembayaranService.handleMidtransNotification(req.body);
+        result = await TagihanService.handleMidtransNotification(req.body);
       }
 
       if (result.success) {
