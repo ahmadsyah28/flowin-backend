@@ -250,3 +250,22 @@ export const getKeys = async (pattern: string): Promise<string[]> => {
     throw error;
   }
 };
+
+// LRANGE - Get range of elements dari Redis List
+// Digunakan untuk membaca IoT entries: key = iot:{userId}:{meterId}
+export const lrange = async (
+  key: string,
+  start: number,
+  stop: number,
+): Promise<unknown[]> => {
+  try {
+    const client = getRedisClient();
+    return await client.lrange(key, start, stop);
+  } catch (error) {
+    console.error(
+      "❌ Redis LRANGE failed:",
+      error instanceof Error ? error.message : "Unknown error",
+    );
+    throw error;
+  }
+};

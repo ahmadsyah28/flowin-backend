@@ -7,11 +7,12 @@ export const riwayatPenggunaanResolvers = {
     },
   },
 
-  // Field resolvers
+  // Field resolvers — sesuai skema baru IoT (MeterID: string)
   RiwayatPenggunaan: {
     id: (parent: any) => parent._id?.toString() || parent.id,
-    meteranId: (parent: any) => parent.MeteranId,
-    meteran: (parent: any) => parent.MeteranId, // populated
+    meteranId: (parent: any) => parent.MeterID,
     penggunaanAir: (parent: any) => parent.PenggunaanAir,
+    timestamp: (parent: any) =>
+      parent.timestamp?.toISOString?.() ?? parent.timestamp,
   },
 };

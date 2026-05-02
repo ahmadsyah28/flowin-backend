@@ -130,19 +130,37 @@ async function main() {
 
     console.log("\n📍 Step 3: Ambil data penggunaan dari RiwayatPenggunaan...");
 
-    const riwayatJan = await RiwayatPenggunaan.findOne({
-      MeteranId: meter._id,
-      Periode: "2026-01",
-    });
+    // Schema baru: raw records per sample. Aggregate total per bulan.
+    const meterIdStr = meter._id.toString();
 
-    const riwayatFeb = await RiwayatPenggunaan.findOne({
-      MeteranId: meter._id,
-      Periode: "2026-02",
-    });
+    const aggJan = await RiwayatPenggunaan.aggregate([
+      {
+        $match: {
+          MeterID: meterIdStr,
+          timestamp: {
+            $gte: new Date("2026-01-01T00:00:00Z"),
+            $lt: new Date("2026-02-01T00:00:00Z"),
+          },
+        },
+      },
+      { $group: { _id: null, total: { $sum: "$PenggunaanAir" } } },
+    ]);
+    const aggFeb = await RiwayatPenggunaan.aggregate([
+      {
+        $match: {
+          MeterID: meterIdStr,
+          timestamp: {
+            $gte: new Date("2026-02-01T00:00:00Z"),
+            $lt: new Date("2026-03-01T00:00:00Z"),
+          },
+        },
+      },
+      { $group: { _id: null, total: { $sum: "$PenggunaanAir" } } },
+    ]);
 
     // Konversi liter → m³ (1 m³ = 1000 liter)
-    const penggunaanJanLiter = riwayatJan?.TotalPenggunaan ?? 7500;
-    const penggunaanFebLiter = riwayatFeb?.TotalPenggunaan ?? 8200;
+    const penggunaanJanLiter = aggJan.length > 0 ? aggJan[0].total : 7500;
+    const penggunaanFebLiter = aggFeb.length > 0 ? aggFeb[0].total : 8200;
 
     // Buat penggunaan Maret secara acak (bulan berjalan, ~10 hari)
     const penggunaanMarLiter =

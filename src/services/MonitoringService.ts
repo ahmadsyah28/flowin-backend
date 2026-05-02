@@ -7,110 +7,94 @@
  *
  * ARSITEKTUR DATA:
  * ----------------
- * 1. Redis (Bulan Berjalan):
- *    - Menyimpan data real-time dari IoT sensor
- *    - Format key: usage:{meteranId}:{YYYY-MM}:daily (Hash)
- *                  usage:{meteranId}:{YYYY-MM-DD}:hourly (Hash)
- *                  usage:{meteranId}:{YYYY-MM}:total (String)
- *                  usage:{meteranId}:latest (String/JSON)
+ * 1. Redis IoT List (data mentah dari IoT firmware):
+ *    - Key: iot:{userId}:{meterId}  (List)
+ *    - Entry: JSON { usedWater: number, ts: number (epoch ms) }
+ *    - TTL: 7 hari (di-set oleh flowin-recieve-iot)
  *
- * 2. MongoDB (Bulan Sebelumnya):
- *    - Data yang sudah di-migrate dari Redis oleh admin
- *    - Collection: RiwayatPenggunaan
+ * 2. MongoDB - collection riwayatpenggunaans (arsip permanen):
+ *    - Raw records: { MeterID, UserID, PenggunaanAir, timestamp }
+ *    - Di-migrate dari Redis oleh flowin-recieve-iot cron (entries > 7 hari)
+ *
+ * 3. Redis Cache (hasil komputasi, di-set oleh service ini):
+ *    - cache:monitoring:{meterId}:dashboard         → TTL 5 menit
+ *    - cache:monitoring:{meterId}:{YYYY-MM}:monthly → TTL 5 menit (bulan ini) / 6 jam (lalu)
+ *    - cache:monitoring:{meterId}:stats             → TTL 15 menit
+ *    - cache:monitoring:{meterId}:latest            → TTL 1 menit
  *
  * ALUR DATA:
  * ----------
- * IoT Sensor → Redis (buffer 1 bulan) → MongoDB (arsip permanen)
- *
- * Note: Service ini READ-ONLY. Tidak menulis ke Redis/MongoDB.
- *       Penulisan dilakukan oleh IoT gateway dan admin migration.
+ * IoT Firmware → Redis List (7 hari) → [cron migrate] → MongoDB (permanen)
+ * MonitoringService membaca Redis List (bulan berjalan) + MongoDB (bulan lalu)
+ * Hasil komputasi di-cache di Redis agar tidak membebani server.
  */
 
 import { Types } from "mongoose";
-import { RiwayatPenggunaan, IRiwayatPenggunaan } from "@/models";
-import { Meter, IMeter } from "@/models/Meter";
+import { RiwayatPenggunaan } from "@/models/RiwayatPenggunaan";
+import { Meter } from "@/models/Meter";
 import {
   KelompokPelanggan,
   IKelompokPelanggan,
 } from "@/models/KelompokPelanggan";
-import { hgetall, getRedisData } from "@/config/redis";
+import { getRedisData, setRedisData, lrange } from "@/config/redis";
+
+// TTL constants (detik)
+const TTL_LATEST = 60; // 1 menit — data IoT terus masuk
+const TTL_MONTHLY_CURRENT = 300; // 5 menit — bulan berjalan
+const TTL_MONTHLY_PAST = 21600; // 6 jam — bulan lalu (data stabil)
+const TTL_STATS = 900; // 15 menit — total + rata-rata
+const TTL_DASHBOARD = 300; // 5 menit — full dashboard
 
 // ==========================================
-// INTERFACES - Definisi tipe data
+// INTERFACES
 // ==========================================
 
-/**
- * Data pembacaan terakhir dari sensor IoT
- * Disimpan di Redis key: usage:{meteranId}:latest
- */
 export interface LatestReading {
-  volume: number; // Volume pembacaan dalam liter
-  timestamp: string; // Waktu pembacaan ISO format
+  volume: number;
+  timestamp: string;
   meteranId: string;
 }
 
-/**
- * Data harian - penggunaan per hari dalam sebulan
- * Key: tanggal (DD), Value: liter
- */
 export interface DailyUsageData {
   [date: string]: number;
 }
 
-/**
- * Data per jam - penggunaan per jam dalam sehari
- * Key: jam (HH), Value: liter
- */
 export interface HourlyUsageData {
   [hour: string]: number;
 }
 
-/**
- * Data penggunaan untuk satu bulan
- * Bisa dari Redis (bulan ini) atau MongoDB (bulan lalu)
- */
 export interface MonthlyUsageData {
-  periode: string; // Format: "YYYY-MM"
-  totalPenggunaan: number; // Total liter dalam bulan
-  dataHarian: DailyUsageData; // Breakdown per hari
-  dataPerJam?: DailyUsageData; // Breakdown per jam (optional)
-  sumber: "redis" | "mongodb"; // Sumber data
+  periode: string;
+  totalPenggunaan: number;
+  dataHarian: DailyUsageData;
+  sumber: "redis" | "mongodb";
 }
 
-/**
- * Statistik perbandingan dengan bulan sebelumnya
- */
 export interface UsageComparison {
-  bulanIni: number; // Total penggunaan bulan ini (liter)
-  bulanLalu: number; // Total penggunaan bulan lalu (liter)
-  selisih: number; // Selisih (positif = naik, negatif = turun)
-  persentase: number; // Persentase perubahan
-  status: "naik" | "turun" | "sama"; // Status perubahan
+  bulanIni: number;
+  bulanLalu: number;
+  selisih: number;
+  persentase: number;
+  status: "naik" | "turun" | "sama";
 }
 
-/**
- * Prediksi penggunaan sampai akhir bulan
- */
 export interface UsagePrediction {
-  hariTerlewati: number; // Jumlah hari yang sudah lewat
-  hariTersisa: number; // Jumlah hari tersisa dalam bulan
-  totalHari: number; // Total hari dalam bulan
-  rataRataHarian: number; // Rata-rata penggunaan per hari (liter)
-  prediksiAkhirBulan: number; // Prediksi total akhir bulan (liter)
-  penggunaanSaatIni: number; // Penggunaan sampai saat ini (liter)
+  hariTerlewati: number;
+  hariTersisa: number;
+  totalHari: number;
+  rataRataHarian: number;
+  prediksiAkhirBulan: number;
+  penggunaanSaatIni: number;
 }
 
-/**
- * Estimasi tagihan berdasarkan tarif PDAM
- */
 export interface BillingEstimate {
-  pemakaianM3: number; // Pemakaian dalam m³ (kubik)
-  tarifRendah: number; // Tarif 0-10 m³
-  tarifTinggi: number; // Tarif >10 m³
-  batasRendah: number; // Batas pemakaian rendah (biasanya 10 m³)
-  biayaPemakaian: number; // Biaya pemakaian air
-  biayaBeban: number; // Biaya beban bulanan
-  totalEstimasi: number; // Total estimasi tagihan
+  pemakaianM3: number;
+  tarifRendah: number;
+  tarifTinggi: number;
+  batasRendah: number;
+  biayaPemakaian: number;
+  biayaBeban: number;
+  totalEstimasi: number;
   kelompok: {
     kode: string;
     nama: string;
@@ -118,130 +102,64 @@ export interface BillingEstimate {
   };
 }
 
-/**
- * Evaluasi kategori penggunaan air
- */
 export interface UsageEvaluation {
-  kategori: "hemat" | "normal" | "boros"; // Kategori penggunaan
-  deskripsi: string; // Penjelasan kategori
-  rataRataBulanan: number; // Rata-rata penggunaan bulanan (liter)
-  batasHemat: number; // Batas kategori hemat
-  batasBoros: number; // Batas kategori boros
+  kategori: "hemat" | "normal" | "boros";
+  deskripsi: string;
+  rataRataBulanan: number;
+  batasHemat: number;
+  batasBoros: number;
 }
 
-/**
- * Response lengkap untuk dashboard monitoring
- */
 export interface MonitoringDashboardResponse {
   success: boolean;
   message: string;
   data: {
-    // Info Meteran
     meteran: {
       id: string;
       nomorMeteran: string;
       nomorAkun: string;
     };
-    // Pembacaan terakhir
     latestReading: LatestReading | null;
-    // Penggunaan bulan ini
     bulanIni: MonthlyUsageData | null;
-    // Penggunaan bulan lalu
     bulanLalu: MonthlyUsageData | null;
-    // Total keseluruhan (semua waktu)
     totalKeseluruhan: number;
-    // Rata-rata bulanan
     rataRataBulanan: number;
-    // Perbandingan dengan bulan lalu
     perbandingan: UsageComparison | null;
-    // Prediksi akhir bulan
     prediksi: UsagePrediction | null;
-    // Evaluasi penggunaan
     evaluasi: UsageEvaluation;
-    // Estimasi tagihan
     estimasiTagihan: BillingEstimate | null;
-    // Data chart harian (7 hari terakhir)
     chartHarian: { tanggal: string; liter: number }[];
   } | null;
 }
 
 // ==========================================
-// HELPER FUNCTIONS
+// HELPERS
 // ==========================================
 
-/**
- * Mendapatkan jumlah hari dalam bulan tertentu
- * @param year - Tahun (YYYY)
- * @param month - Bulan (1-12)
- * @returns Jumlah hari dalam bulan tersebut
- *
- * Contoh: getDaysInMonth(2026, 2) → 28 (Februari 2026)
- */
 function getDaysInMonth(year: number, month: number): number {
-  // Month di Date adalah 0-indexed, jadi kita set ke bulan berikutnya dan hari 0
-  // Hari 0 berarti hari terakhir bulan sebelumnya
   return new Date(year, month, 0).getDate();
 }
 
-/**
- * Mendapatkan periode bulan dalam format YYYY-MM
- * @param date - Objek Date
- * @returns String format "YYYY-MM"
- *
- * Contoh: getPeriode(new Date("2026-03-10")) → "2026-03"
- */
 function getPeriode(date: Date): string {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, "0");
   return `${year}-${month}`;
 }
 
-/**
- * Mendapatkan periode bulan sebelumnya
- * @param date - Objek Date acuan
- * @returns String format "YYYY-MM" untuk bulan sebelumnya
- *
- * Contoh: getPreviousPeriode(new Date("2026-03-10")) → "2026-02"
- */
 function getPreviousPeriode(date: Date): string {
   const prevDate = new Date(date);
   prevDate.setMonth(prevDate.getMonth() - 1);
   return getPeriode(prevDate);
 }
 
-/**
- * Konversi liter ke meter kubik (m³)
- * @param liter - Volume dalam liter
- * @returns Volume dalam m³
- *
- * 1 m³ = 1000 liter
- * Contoh: literToM3(5500) → 5.5
- */
 function literToM3(liter: number): number {
   return liter / 1000;
 }
 
-/**
- * Menghitung biaya tagihan berdasarkan tarif PDAM
- * @param kelompok - Data kelompok pelanggan dengan tarif
- * @param pemakaianM3 - Pemakaian dalam m³
- * @returns Object dengan breakdown biaya
- *
- * Struktur tarif PDAM:
- * - 0-10 m³: Tarif rendah (per m³)
- * - >10 m³: Tarif tinggi (per m³) untuk kelebihan
- * - Biaya beban: Biaya tetap bulanan
- *
- * Contoh: pemakaian 15 m³ dengan tarif RT-1 (Rp5.500 / Rp6.000)
- * = (10 x 5.500) + (5 x 6.000) + 10.000 (beban)
- * = 55.000 + 30.000 + 10.000
- * = Rp95.000
- */
 function hitungTagihan(
   kelompok: IKelompokPelanggan,
   pemakaianM3: number,
 ): { biayaPemakaian: number; biayaBeban: number; total: number } {
-  // Jika kelompok menggunakan tarif kesepakatan (custom)
   if (kelompok.IsKesepakatan) {
     return {
       biayaPemakaian: 0,
@@ -251,14 +169,9 @@ function hitungTagihan(
   }
 
   let biayaPemakaian = 0;
-
   if (pemakaianM3 <= kelompok.BatasRendah) {
-    // Semua pemakaian di bawah batas → gunakan tarif rendah
     biayaPemakaian = pemakaianM3 * kelompok.TarifRendah;
   } else {
-    // Pemakaian melebihi batas:
-    // - 0 sampai BatasRendah m³ → tarif rendah
-    // - Sisanya → tarif tinggi
     biayaPemakaian =
       kelompok.BatasRendah * kelompok.TarifRendah +
       (pemakaianM3 - kelompok.BatasRendah) * kelompok.TarifTinggi;
@@ -271,100 +184,117 @@ function hitungTagihan(
   };
 }
 
+/**
+ * Ambil userId dari meteranId via relasi Meter → KoneksiData → IdPelanggan.
+ * Diperlukan karena IoT Redis key menggunakan userId: iot:{userId}:{meterId}
+ */
+async function getUserIdFromMeter(meterId: string): Promise<string | null> {
+  try {
+    const meter = await Meter.findById(meterId).populate({
+      path: "IdKoneksiData",
+      select: "IdPelanggan",
+    });
+    if (!meter || !meter.IdKoneksiData) return null;
+    const koneksi = meter.IdKoneksiData as any;
+    return koneksi.IdPelanggan?.toString() ?? null;
+  } catch {
+    return null;
+  }
+}
+
 // ==========================================
-// REDIS DATA ACCESS
+// REDIS IOT DATA ACCESS
 // ==========================================
 
 /**
- * Mendapatkan data penggunaan bulan ini dari Redis
- *
- * Redis menyimpan data IoT dengan struktur:
- * - usage:{meteranId}:{YYYY-MM}:daily → Hash { "01": 45.7, "02": 38.2, ... }
- * - usage:{meteranId}:{YYYY-MM}:total → String "1234.5"
- *
- * @param meteranId - ID meteran
- * @param periode - Periode bulan (YYYY-MM)
- * @returns MonthlyUsageData atau null jika tidak ada
+ * Ambil entry terakhir dari Redis IoT List untuk pembacaan terkini.
+ * Key: iot:{userId}:{meterId} — ditulis oleh flowin-recieve-iot.
  */
-async function getRedisMonthlyUsage(
+async function getLatestReading(
   meteranId: string,
-  periode: string,
-): Promise<MonthlyUsageData | null> {
+  userId: string,
+): Promise<LatestReading | null> {
+  const cacheKey = `cache:monitoring:${meteranId}:latest`;
   try {
-    // Key untuk data harian: usage:{meteranId}:{YYYY-MM}:daily
-    const dailyKey = `usage:${meteranId}:${periode}:daily`;
-
-    // Key untuk total bulanan: usage:{meteranId}:{YYYY-MM}:total
-    const totalKey = `usage:${meteranId}:${periode}:total`;
-
-    // Ambil data harian dari Redis Hash
-    const dailyData = await hgetall(dailyKey);
-
-    // Ambil total dari Redis String
-    const totalStr = await getRedisData(totalKey);
-    // Upstash may return a number directly if stored as numeric
-    const total =
-      totalStr !== null && totalStr !== undefined
-        ? typeof totalStr === "number"
-          ? totalStr
-          : parseFloat(totalStr as string)
-        : 0;
-
-    // Jika tidak ada data sama sekali, return null
-    if (!dailyData && (totalStr === null || totalStr === undefined)) {
-      return null;
+    const cached = await getRedisData(cacheKey);
+    if (cached) {
+      return typeof cached === "string"
+        ? JSON.parse(cached)
+        : (cached as LatestReading);
     }
 
-    // Konversi data harian ke format yang konsisten
-    const dataHarian: DailyUsageData = {};
-    if (dailyData) {
-      Object.entries(dailyData).forEach(([date, value]) => {
-        dataHarian[date] =
-          typeof value === "number" ? value : parseFloat(value);
-      });
-    }
+    const iotKey = `iot:${userId}:${meteranId}`;
+    const entries = await lrange(iotKey, -1, -1);
+    if (!entries || entries.length === 0) return null;
 
-    return {
-      periode,
-      totalPenggunaan: total,
-      dataHarian,
-      sumber: "redis",
+    const raw = entries[0];
+    const parsed: any = typeof raw === "string" ? JSON.parse(raw) : raw;
+
+    const result: LatestReading = {
+      volume: parsed.usedWater ?? 0,
+      timestamp: new Date(parsed.ts).toISOString(),
+      meteranId,
     };
+
+    await setRedisData(cacheKey, JSON.stringify(result), TTL_LATEST);
+    return result;
   } catch (error) {
-    console.error(`Error getting Redis data for ${meteranId}:`, error);
+    console.error(`Error getting latest reading for ${meteranId}:`, error);
     return null;
   }
 }
 
 /**
- * Mendapatkan pembacaan terakhir dari sensor IoT
- *
- * Data disimpan di: usage:{meteranId}:latest
- * Format JSON: { "volume": 123.45, "timestamp": "2026-03-10T10:30:00Z" }
- *
- * @param meteranId - ID meteran
- * @returns LatestReading atau null
+ * Agregasi data bulan berjalan dari Redis IoT List.
+ * Baca semua entries list, filter bulan sesuai periode, group per hari.
+ * Hasil di-cache untuk mengurangi iterasi berulang.
  */
-async function getLatestReading(
+async function getRedisMonthlyUsage(
   meteranId: string,
-): Promise<LatestReading | null> {
+  userId: string,
+  periode: string,
+): Promise<MonthlyUsageData | null> {
+  const cacheKey = `cache:monitoring:${meteranId}:${periode}:monthly`;
   try {
-    const latestKey = `usage:${meteranId}:latest`;
-    const data = await getRedisData(latestKey);
-
-    if (!data) {
-      return null;
+    const cached = await getRedisData(cacheKey);
+    if (cached) {
+      return typeof cached === "string"
+        ? JSON.parse(cached)
+        : (cached as MonthlyUsageData);
     }
 
-    // Upstash REST client auto-deserializes JSON, so data may already be an object
-    const parsed: any = typeof data === "string" ? JSON.parse(data) : data;
-    return {
-      volume: parsed.volume || 0,
-      timestamp: parsed.timestamp || new Date().toISOString(),
-      meteranId,
+    const iotKey = `iot:${userId}:${meteranId}`;
+    const entries = await lrange(iotKey, 0, -1);
+
+    if (!entries || entries.length === 0) return null;
+
+    const dataHarian: DailyUsageData = {};
+    let total = 0;
+
+    for (const raw of entries) {
+      const parsed: any = typeof raw === "string" ? JSON.parse(raw) : raw;
+      const entryDate = new Date(parsed.ts);
+      if (getPeriode(entryDate) !== periode) continue;
+
+      const day = String(entryDate.getDate()).padStart(2, "0");
+      const volume = parsed.usedWater ?? 0;
+      dataHarian[day] = (dataHarian[day] ?? 0) + volume;
+      total += volume;
+    }
+
+    if (total === 0 && Object.keys(dataHarian).length === 0) return null;
+
+    const result: MonthlyUsageData = {
+      periode,
+      totalPenggunaan: Math.round(total * 100) / 100,
+      dataHarian,
+      sumber: "redis",
     };
+
+    await setRedisData(cacheKey, JSON.stringify(result), TTL_MONTHLY_CURRENT);
+    return result;
   } catch (error) {
-    console.error(`Error getting latest reading for ${meteranId}:`, error);
+    console.error(`Error getting Redis IoT data for ${meteranId}:`, error);
     return null;
   }
 }
@@ -374,43 +304,65 @@ async function getLatestReading(
 // ==========================================
 
 /**
- * Mendapatkan data penggunaan dari MongoDB
- *
- * MongoDB menyimpan data yang sudah di-migrate dari Redis.
- * Data bulan sebelumnya disimpan setelah proses migrasi admin.
- *
- * @param meteranId - ID meteran (ObjectId)
- * @param periode - Periode bulan (YYYY-MM)
- * @returns MonthlyUsageData atau null
+ * Agregasi data bulan dari MongoDB raw records.
+ * Gunakan aggregation pipeline untuk group per hari.
+ * Cache TTL disesuaikan: bulan berjalan pendek, bulan lalu panjang.
  */
 async function getMongoMonthlyUsage(
-  meteranId: Types.ObjectId | string,
+  meteranId: string,
   periode: string,
 ): Promise<MonthlyUsageData | null> {
+  const isCurrent = periode === getPeriode(new Date());
+  const ttl = isCurrent ? TTL_MONTHLY_CURRENT : TTL_MONTHLY_PAST;
+  const cacheKey = `cache:monitoring:${meteranId}:${periode}:monthly`;
+
   try {
-    const riwayat = await RiwayatPenggunaan.findOne({
-      MeteranId: meteranId,
-      Periode: periode,
-    });
-
-    if (!riwayat) {
-      return null;
+    const cached = await getRedisData(cacheKey);
+    if (cached) {
+      return typeof cached === "string"
+        ? JSON.parse(cached)
+        : (cached as MonthlyUsageData);
     }
 
-    // Convert Mongoose Map ke plain object
+    const start = new Date(`${periode}-01T00:00:00.000Z`);
+    const end = new Date(start);
+    end.setMonth(end.getMonth() + 1);
+
+    const result = await RiwayatPenggunaan.aggregate([
+      {
+        $match: {
+          MeterID: meteranId,
+          timestamp: { $gte: start, $lt: end },
+        },
+      },
+      {
+        $group: {
+          _id: { $dayOfMonth: "$timestamp" },
+          total: { $sum: "$PenggunaanAir" },
+        },
+      },
+      { $sort: { _id: 1 } },
+    ]);
+
+    if (result.length === 0) return null;
+
     const dataHarian: DailyUsageData = {};
-    if (riwayat.DataHarian) {
-      riwayat.DataHarian.forEach((value, key) => {
-        dataHarian[key] = value;
-      });
+    let totalPenggunaan = 0;
+    for (const row of result) {
+      const day = String(row._id).padStart(2, "0");
+      dataHarian[day] = Math.round(row.total * 100) / 100;
+      totalPenggunaan += row.total;
     }
 
-    return {
-      periode: riwayat.Periode,
-      totalPenggunaan: riwayat.TotalPenggunaan,
+    const data: MonthlyUsageData = {
+      periode,
+      totalPenggunaan: Math.round(totalPenggunaan * 100) / 100,
       dataHarian,
       sumber: "mongodb",
     };
+
+    await setRedisData(cacheKey, JSON.stringify(data), ttl);
+    return data;
   } catch (error) {
     console.error(`Error getting MongoDB data for ${meteranId}:`, error);
     return null;
@@ -418,21 +370,22 @@ async function getMongoMonthlyUsage(
 }
 
 /**
- * Mendapatkan total keseluruhan penggunaan sepanjang waktu
- *
- * Menghitung jumlah dari semua record di MongoDB untuk meteran tertentu.
- *
- * @param meteranId - ID meteran
- * @returns Total penggunaan dalam liter
+ * Total penggunaan keseluruhan (semua waktu) dari MongoDB.
+ * Di-cache 15 menit.
  */
-async function getTotalAllTime(
-  meteranId: Types.ObjectId | string,
-): Promise<number> {
+async function getTotalAllTime(meteranId: string): Promise<number> {
+  const cacheKey = `cache:monitoring:${meteranId}:stats`;
   try {
-    // Gunakan aggregation untuk sum semua TotalPenggunaan
+    const cached = await getRedisData(cacheKey);
+    if (cached) {
+      const parsed =
+        typeof cached === "string" ? JSON.parse(cached) : (cached as any);
+      if (typeof parsed?.totalAllTime === "number") return parsed.totalAllTime;
+    }
+
     const result = await RiwayatPenggunaan.aggregate([
-      { $match: { MeteranId: new Types.ObjectId(meteranId.toString()) } },
-      { $group: { _id: null, total: { $sum: "$TotalPenggunaan" } } },
+      { $match: { MeterID: meteranId } },
+      { $group: { _id: null, total: { $sum: "$PenggunaanAir" } } },
     ]);
 
     return result.length > 0 ? result[0].total : 0;
@@ -443,34 +396,89 @@ async function getTotalAllTime(
 }
 
 /**
- * Mendapatkan rata-rata penggunaan bulanan
- *
- * Hitung dari history 6 bulan terakhir di MongoDB.
- *
- * @param meteranId - ID meteran
- * @returns Rata-rata penggunaan bulanan dalam liter
+ * Rata-rata penggunaan bulanan dari 6 bulan terakhir di MongoDB.
+ * Aggregate group by bulan terlebih dahulu, lalu hitung rata-rata.
+ * Di-cache bersama totalAllTime dalam key yang sama.
  */
-async function getMonthlyAverage(
-  meteranId: Types.ObjectId | string,
-): Promise<number> {
+async function getMonthlyAverage(meteranId: string): Promise<number> {
+  const cacheKey = `cache:monitoring:${meteranId}:stats`;
   try {
-    // Ambil 6 bulan terakhir untuk kalkulasi rata-rata
-    const riwayat = await RiwayatPenggunaan.find({
-      MeteranId: meteranId,
-    })
-      .sort({ Periode: -1 })
-      .limit(6);
-
-    if (riwayat.length === 0) {
-      return 0;
+    const cached = await getRedisData(cacheKey);
+    if (cached) {
+      const parsed =
+        typeof cached === "string" ? JSON.parse(cached) : (cached as any);
+      if (typeof parsed?.monthlyAverage === "number")
+        return parsed.monthlyAverage;
     }
 
-    // Hitung rata-rata
-    const total = riwayat.reduce((sum, r) => sum + r.TotalPenggunaan, 0);
-    return Math.round(total / riwayat.length);
+    const sixMonthsAgo = new Date();
+    sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+
+    const result = await RiwayatPenggunaan.aggregate([
+      {
+        $match: {
+          MeterID: meteranId,
+          timestamp: { $gte: sixMonthsAgo },
+        },
+      },
+      {
+        $group: {
+          _id: {
+            year: { $year: "$timestamp" },
+            month: { $month: "$timestamp" },
+          },
+          total: { $sum: "$PenggunaanAir" },
+        },
+      },
+      { $sort: { "_id.year": -1, "_id.month": -1 } },
+      { $limit: 6 },
+    ]);
+
+    if (result.length === 0) return 0;
+
+    const sum = result.reduce((acc: number, r: any) => acc + r.total, 0);
+    return Math.round(sum / result.length);
   } catch (error) {
     console.error(`Error calculating average for ${meteranId}:`, error);
     return 0;
+  }
+}
+
+/**
+ * Hitung totalAllTime dan monthlyAverage sekaligus, simpan ke cache stats.
+ */
+async function getStatsWithCache(
+  meteranId: string,
+  bulanIniTotal: number,
+): Promise<{ totalAllTime: number; monthlyAverage: number }> {
+  const cacheKey = `cache:monitoring:${meteranId}:stats`;
+  try {
+    const cached = await getRedisData(cacheKey);
+    if (cached) {
+      const parsed =
+        typeof cached === "string" ? JSON.parse(cached) : (cached as any);
+      if (
+        typeof parsed?.totalAllTime === "number" &&
+        typeof parsed?.monthlyAverage === "number"
+      ) {
+        return parsed;
+      }
+    }
+
+    const [totalMongo, monthlyAverage] = await Promise.all([
+      getTotalAllTime(meteranId),
+      getMonthlyAverage(meteranId),
+    ]);
+
+    const stats = {
+      totalAllTime: totalMongo + bulanIniTotal,
+      monthlyAverage,
+    };
+
+    await setRedisData(cacheKey, JSON.stringify(stats), TTL_STATS);
+    return stats;
+  } catch {
+    return { totalAllTime: bulanIniTotal, monthlyAverage: 0 };
   }
 }
 
@@ -478,54 +486,22 @@ async function getMonthlyAverage(
 // CALCULATION FUNCTIONS
 // ==========================================
 
-/**
- * Menghitung perbandingan penggunaan bulan ini vs bulan lalu
- *
- * @param bulanIni - Total penggunaan bulan ini (liter)
- * @param bulanLalu - Total penggunaan bulan lalu (liter)
- * @returns UsageComparison dengan detail perbandingan
- */
 function calculateComparison(
   bulanIni: number,
   bulanLalu: number,
 ): UsageComparison {
   const selisih = bulanIni - bulanLalu;
-
-  // Hitung persentase perubahan
-  // Hindari division by zero
   const persentase =
     bulanLalu > 0 ? Math.round((selisih / bulanLalu) * 100) : 0;
 
-  // Tentukan status
   let status: "naik" | "turun" | "sama";
-  if (selisih > 0) {
-    status = "naik";
-  } else if (selisih < 0) {
-    status = "turun";
-  } else {
-    status = "sama";
-  }
+  if (selisih > 0) status = "naik";
+  else if (selisih < 0) status = "turun";
+  else status = "sama";
 
-  return {
-    bulanIni,
-    bulanLalu,
-    selisih,
-    persentase,
-    status,
-  };
+  return { bulanIni, bulanLalu, selisih, persentase, status };
 }
 
-/**
- * Menghitung prediksi penggunaan sampai akhir bulan
- *
- * Logika:
- * 1. Hitung rata-rata penggunaan per hari dari hari yang sudah lewat
- * 2. Kalikan dengan total hari dalam bulan untuk prediksi
- *
- * @param penggunaanSaatIni - Total penggunaan sampai hari ini
- * @param tanggalHariIni - Tanggal hari ini
- * @returns UsagePrediction
- */
 function calculatePrediction(
   penggunaanSaatIni: number,
   tanggalHariIni: Date,
@@ -534,20 +510,11 @@ function calculatePrediction(
   const bulan = tanggalHariIni.getMonth() + 1;
   const tanggal = tanggalHariIni.getDate();
 
-  // Total hari dalam bulan ini
   const totalHari = getDaysInMonth(tahun, bulan);
-
-  // Hari yang sudah terlewati (termasuk hari ini)
   const hariTerlewati = tanggal;
-
-  // Hari yang tersisa
   const hariTersisa = totalHari - hariTerlewati;
-
-  // Rata-rata penggunaan per hari
   const rataRataHarian =
     hariTerlewati > 0 ? Math.round(penggunaanSaatIni / hariTerlewati) : 0;
-
-  // Prediksi total akhir bulan
   const prediksiAkhirBulan = Math.round(rataRataHarian * totalHari);
 
   return {
@@ -560,22 +527,9 @@ function calculatePrediction(
   };
 }
 
-/**
- * Mengevaluasi kategori penggunaan air
- *
- * Kategori berdasarkan rata-rata bulanan:
- * - Hemat: < 5000 liter/bulan (5 m³)
- * - Normal: 5000-15000 liter/bulan (5-15 m³)
- * - Boros: > 15000 liter/bulan (15 m³)
- *
- * Angka ini berdasarkan standar penggunaan rumah tangga.
- *
- * @param rataRataBulanan - Rata-rata penggunaan bulanan (liter)
- * @returns UsageEvaluation
- */
 function evaluateUsage(rataRataBulanan: number): UsageEvaluation {
-  const batasHemat = 5000; // 5 m³
-  const batasBoros = 15000; // 15 m³
+  const batasHemat = 5000;
+  const batasBoros = 15000;
 
   let kategori: "hemat" | "normal" | "boros";
   let deskripsi: string;
@@ -594,26 +548,9 @@ function evaluateUsage(rataRataBulanan: number): UsageEvaluation {
       "Penggunaan air Anda cukup tinggi. Pertimbangkan untuk menghemat penggunaan air.";
   }
 
-  return {
-    kategori,
-    deskripsi,
-    rataRataBulanan,
-    batasHemat,
-    batasBoros,
-  };
+  return { kategori, deskripsi, rataRataBulanan, batasHemat, batasBoros };
 }
 
-/**
- * Membuat data chart untuk 7 hari terakhir
- *
- * Menggabungkan data dari bulan ini dan bulan lalu jika diperlukan.
- * Contoh: tanggal 3 Maret, akan ambil 28 Feb - 3 Mar.
- *
- * @param bulanIni - Data bulan ini
- * @param bulanLalu - Data bulan lalu
- * @param tanggalHariIni - Tanggal hari ini
- * @returns Array data untuk chart
- */
 function buildDailyChart(
   bulanIni: MonthlyUsageData | null,
   bulanLalu: MonthlyUsageData | null,
@@ -621,18 +558,14 @@ function buildDailyChart(
 ): { tanggal: string; liter: number }[] {
   const result: { tanggal: string; liter: number }[] = [];
 
-  // Loop 7 hari ke belakang
   for (let i = 6; i >= 0; i--) {
     const date = new Date(tanggalHariIni);
     date.setDate(date.getDate() - i);
 
     const periode = getPeriode(date);
     const tanggal = String(date.getDate()).padStart(2, "0");
-
-    // Format untuk display: "DD/MM"
     const displayDate = `${tanggal}/${String(date.getMonth() + 1).padStart(2, "0")}`;
 
-    // Cari data dari source yang sesuai
     let liter = 0;
     if (bulanIni && periode === bulanIni.periode) {
       liter = bulanIni.dataHarian[tanggal] || 0;
@@ -640,10 +573,7 @@ function buildDailyChart(
       liter = bulanLalu.dataHarian[tanggal] || 0;
     }
 
-    result.push({
-      tanggal: displayDate,
-      liter: Math.round(liter),
-    });
+    result.push({ tanggal: displayDate, liter: Math.round(liter) });
   }
 
   return result;
@@ -655,34 +585,35 @@ function buildDailyChart(
 
 export class MonitoringService {
   /**
-   * Mendapatkan data dashboard monitoring lengkap
-   *
-   * Ini adalah method utama yang dipanggil oleh GraphQL resolver.
-   * Menggabungkan data dari Redis (bulan ini) dan MongoDB (bulan lalu),
-   * menghitung statistik, dan menyiapkan data untuk UI.
-   *
-   * @param meteranId - ID meteran yang akan dimonitor
-   * @returns MonitoringDashboardResponse dengan semua data dashboard
+   * Mendapatkan data dashboard monitoring lengkap.
+   * Semua komputasi berat di-cache di Redis untuk mengurangi beban server.
    *
    * Flow:
-   * 1. Validasi meteran exists
-   * 2. Ambil data bulan ini dari Redis
-   * 3. Ambil data bulan lalu dari MongoDB
-   * 4. Hitung statistik dan prediksi
-   * 5. Ambil tarif dan hitung estimasi tagihan
-   * 6. Return response lengkap
+   * 1. Cek dashboard cache → return jika ada
+   * 2. Validasi meteran + ambil userId (untuk IoT Redis key)
+   * 3. Ambil data bulan ini dari Redis IoT List (agregasi + cache)
+   * 4. Ambil data bulan lalu dari MongoDB (agregasi + cache)
+   * 5. Hitung stats (total + rata-rata) dengan cache
+   * 6. Hitung perbandingan, prediksi, evaluasi, tagihan
+   * 7. Simpan full dashboard ke cache, return
    */
   static async getDashboard(
     meteranId: string | Types.ObjectId,
   ): Promise<MonitoringDashboardResponse> {
-    try {
-      // ========================================
-      // STEP 1: Validasi meteran
-      // ========================================
-      const meter = await Meter.findById(meteranId).populate(
-        "IdKelompokPelanggan",
-      );
+    const meteranIdStr = meteranId.toString();
+    const dashboardKey = `cache:monitoring:${meteranIdStr}:dashboard`;
 
+    try {
+      // Cek dashboard cache
+      const cachedDashboard = await getRedisData(dashboardKey);
+      if (cachedDashboard) {
+        return typeof cachedDashboard === "string"
+          ? JSON.parse(cachedDashboard)
+          : (cachedDashboard as MonitoringDashboardResponse);
+      }
+
+      // Validasi meteran
+      const meter = await Meter.findById(meteranId).populate("IdKoneksiData");
       if (!meter) {
         return {
           success: false,
@@ -691,80 +622,59 @@ export class MonitoringService {
         };
       }
 
-      const meteranIdStr = meteranId.toString();
+      // Ambil userId untuk membaca Redis IoT key
+      const userId = await getUserIdFromMeter(meteranIdStr);
+      if (!userId) {
+        return {
+          success: false,
+          message: "Pengguna untuk meteran tidak ditemukan",
+          data: null,
+        };
+      }
+
       const now = new Date();
       const periodeIni = getPeriode(now);
       const periodeLalu = getPreviousPeriode(now);
 
-      // ========================================
-      // STEP 2: Ambil data dari Redis & MongoDB
-      // ========================================
+      // Ambil data secara paralel untuk efisiensi
+      const [bulanIni, bulanLalu, latestReading] = await Promise.all([
+        getRedisMonthlyUsage(meteranIdStr, userId, periodeIni),
+        getMongoMonthlyUsage(meteranIdStr, periodeLalu),
+        getLatestReading(meteranIdStr, userId),
+      ]);
 
-      // Data bulan ini dari Redis (IoT real-time)
-      const bulanIni = await getRedisMonthlyUsage(meteranIdStr, periodeIni);
+      const totalBulanIni = bulanIni?.totalPenggunaan ?? 0;
 
-      // Data bulan lalu dari MongoDB (archived)
-      const bulanLalu = await getMongoMonthlyUsage(meteranId, periodeLalu);
-
-      // Pembacaan terakhir dari sensor
-      const latestReading = await getLatestReading(meteranIdStr);
-
-      // ========================================
-      // STEP 3: Hitung statistik historis
-      // ========================================
-
-      // Total keseluruhan (semua bulan di MongoDB + bulan ini di Redis)
-      const totalMongo = await getTotalAllTime(meteranId);
-      const totalBulanIni = bulanIni?.totalPenggunaan || 0;
-      const totalKeseluruhan = totalMongo + totalBulanIni;
-
-      // Rata-rata bulanan dari 6 bulan terakhir
-      const rataRataBulanan = await getMonthlyAverage(meteranId);
-
-      // ========================================
-      // STEP 4: Hitung perbandingan & prediksi
-      // ========================================
+      // Stats (total all-time + rata-rata bulanan) dengan cache
+      const { totalAllTime, monthlyAverage } = await getStatsWithCache(
+        meteranIdStr,
+        totalBulanIni,
+      );
 
       // Perbandingan dengan bulan lalu
-      let perbandingan: UsageComparison | null = null;
-      if (bulanLalu) {
-        perbandingan = calculateComparison(
-          totalBulanIni,
-          bulanLalu.totalPenggunaan,
-        );
-      }
+      const perbandingan = bulanLalu
+        ? calculateComparison(totalBulanIni, bulanLalu.totalPenggunaan)
+        : null;
 
       // Prediksi akhir bulan
-      let prediksi: UsagePrediction | null = null;
-      if (totalBulanIni > 0) {
-        prediksi = calculatePrediction(totalBulanIni, now);
-      }
+      const prediksi =
+        totalBulanIni > 0 ? calculatePrediction(totalBulanIni, now) : null;
 
       // Evaluasi kategori penggunaan
       const evaluasi = evaluateUsage(
-        rataRataBulanan > 0 ? rataRataBulanan : totalBulanIni,
+        monthlyAverage > 0 ? monthlyAverage : totalBulanIni,
       );
 
-      // ========================================
-      // STEP 5: Hitung estimasi tagihan
-      // ========================================
-
+      // Estimasi tagihan
       let estimasiTagihan: BillingEstimate | null = null;
-
-      // Ambil data kelompok pelanggan untuk tarif
       const kelompok = await KelompokPelanggan.findById(
         meter.IdKelompokPelanggan,
       );
-
       if (kelompok) {
-        // Gunakan penggunaan bulan ini untuk estimasi tagihan
-        const pemakaianLiter = totalBulanIni;
-        const pemakaianM3 = literToM3(pemakaianLiter);
-
+        const pemakaianM3 = literToM3(totalBulanIni);
         const tagihan = hitungTagihan(kelompok, pemakaianM3);
-
         estimasiTagihan = {
-          pemakaianM3: Math.round(pemakaianM3 * 100) / 100, // 2 decimal
+          pemakaianM3: Math.round(pemakaianM3 * 100) / 100,
           tarifRendah: kelompok.TarifRendah,
           tarifTinggi: kelompok.TarifTinggi,
           batasRendah: kelompok.BatasRendah,
@@ -779,17 +689,9 @@ export class MonitoringService {
         };
       }
 
-      // ========================================
-      // STEP 6: Build chart data
-      // ========================================
-
       const chartHarian = buildDailyChart(bulanIni, bulanLalu, now);
 
-      // ========================================
-      // STEP 7: Return response
-      // ========================================
-
-      return {
+      const response: MonitoringDashboardResponse = {
         success: true,
         message: "Berhasil mendapatkan data monitoring",
         data: {
@@ -801,8 +703,8 @@ export class MonitoringService {
           latestReading,
           bulanIni,
           bulanLalu,
-          totalKeseluruhan,
-          rataRataBulanan,
+          totalKeseluruhan: totalAllTime,
+          rataRataBulanan: monthlyAverage,
           perbandingan,
           prediksi,
           evaluasi,
@@ -810,6 +712,10 @@ export class MonitoringService {
           chartHarian,
         },
       };
+
+      // Cache full dashboard
+      await setRedisData(dashboardKey, JSON.stringify(response), TTL_DASHBOARD);
+      return response;
     } catch (error: any) {
       console.error("Error in MonitoringService.getDashboard:", error);
       return {
@@ -821,14 +727,8 @@ export class MonitoringService {
   }
 
   /**
-   * Mendapatkan data historis penggunaan
-   *
-   * Mengambil riwayat penggunaan dari beberapa bulan terakhir.
-   * Data ini bisa digunakan untuk chart historis di UI.
-   *
-   * @param meteranId - ID meteran
-   * @param jumlahBulan - Jumlah bulan ke belakang (default: 6)
-   * @returns Array MonthlyUsageData
+   * Mendapatkan data historis penggunaan beberapa bulan terakhir.
+   * Tiap bulan di-cache secara individual.
    */
   static async getHistory(
     meteranId: string | Types.ObjectId,
@@ -839,33 +739,22 @@ export class MonitoringService {
     data: MonthlyUsageData[] | null;
   }> {
     try {
-      // Ambil dari MongoDB
-      const riwayat = await RiwayatPenggunaan.find({
-        MeteranId: meteranId,
-      })
-        .sort({ Periode: -1 })
-        .limit(jumlahBulan);
+      const meteranIdStr = meteranId.toString();
+      const now = new Date();
+      const results: MonthlyUsageData[] = [];
 
-      const data: MonthlyUsageData[] = riwayat.map((r) => {
-        const dataHarian: DailyUsageData = {};
-        if (r.DataHarian) {
-          r.DataHarian.forEach((value, key) => {
-            dataHarian[key] = value;
-          });
-        }
-
-        return {
-          periode: r.Periode,
-          totalPenggunaan: r.TotalPenggunaan,
-          dataHarian,
-          sumber: "mongodb" as const,
-        };
-      });
+      for (let i = 1; i <= jumlahBulan; i++) {
+        const d = new Date(now);
+        d.setMonth(d.getMonth() - i);
+        const periode = getPeriode(d);
+        const data = await getMongoMonthlyUsage(meteranIdStr, periode);
+        if (data) results.push(data);
+      }
 
       return {
         success: true,
         message: "Berhasil mendapatkan riwayat penggunaan",
-        data,
+        data: results,
       };
     } catch (error: any) {
       return {
@@ -877,43 +766,131 @@ export class MonitoringService {
   }
 
   /**
-   * Mendapatkan data per jam untuk hari tertentu
+   * Mendapatkan data per jam untuk hari tertentu.
+   * Format tanggal: YYYY-MM-DD
    *
-   * Untuk menampilkan breakdown penggunaan per jam dalam sehari.
-   *
-   * @param meteranId - ID meteran
-   * @param tanggal - Tanggal dalam format YYYY-MM-DD
-   * @returns Data penggunaan per jam
+   * Sumber data dipilih berdasarkan umur tanggal:
+   * - ≤ 7 hari lalu → Redis IoT List (data belum dimigrasikan ke MongoDB)
+   * - > 7 hari lalu → MongoDB (data sudah dimigrasikan oleh cron)
    */
   static async getHourlyUsage(
     meteranId: string,
-    tanggal: string, // Format: YYYY-MM-DD
+    tanggal: string,
   ): Promise<{
     success: boolean;
     message: string;
     data: HourlyUsageData | null;
   }> {
+    const cacheKey = `cache:monitoring:${meteranId}:${tanggal}:hourly`;
     try {
-      // Key Redis: usage:{meteranId}:{YYYY-MM-DD}:hourly
-      const hourlyKey = `usage:${meteranId}:${tanggal}:hourly`;
-
-      const hourlyData = await hgetall(hourlyKey);
-
-      if (!hourlyData) {
+      // Cek cache dulu
+      const cached = await getRedisData(cacheKey);
+      if (cached) {
+        const parsed = typeof cached === "string" ? JSON.parse(cached) : cached;
         return {
-          success: false,
-          message: "Data per jam tidak ditemukan untuk tanggal tersebut",
-          data: null,
+          success: true,
+          message: "Berhasil mendapatkan data per jam",
+          data: parsed,
         };
       }
 
-      // Konversi ke format yang konsisten
-      const data: HourlyUsageData = {};
-      Object.entries(hourlyData).forEach(([hour, value]) => {
-        data[hour] =
-          typeof value === "number" ? value : parseFloat(String(value));
-      });
+      // Tentukan apakah data masih di Redis IoT List (≤ 7 hari) atau sudah di MongoDB
+      const tanggalDate = new Date(`${tanggal}T00:00:00.000Z`);
+      const sevenDaysAgo = new Date();
+      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+      sevenDaysAgo.setHours(0, 0, 0, 0);
 
+      const isInRedis = tanggalDate >= sevenDaysAgo;
+      const isToday = tanggal === new Date().toISOString().slice(0, 10);
+      const ttl = isToday ? TTL_MONTHLY_CURRENT : TTL_MONTHLY_PAST;
+
+      let data: HourlyUsageData | null = null;
+
+      if (isInRedis) {
+        // ── Baca dari Redis IoT List ──────────────────────────────────
+        const userId = await getUserIdFromMeter(meteranId);
+        if (!userId) {
+          return {
+            success: false,
+            message: "Pengguna untuk meteran tidak ditemukan",
+            data: null,
+          };
+        }
+
+        const iotKey = `iot:${userId}:${meteranId}`;
+        const entries = await lrange(iotKey, 0, -1);
+
+        if (!entries || entries.length === 0) {
+          return {
+            success: false,
+            message: "Data per jam tidak ditemukan",
+            data: null,
+          };
+        }
+
+        const hourlyMap: HourlyUsageData = {};
+        for (const raw of entries) {
+          const parsed: any = typeof raw === "string" ? JSON.parse(raw) : raw;
+          const entryDate = new Date(parsed.ts);
+          // Filter hanya tanggal yang diminta (bandingkan dalam UTC)
+          if (entryDate.toISOString().slice(0, 10) !== tanggal) continue;
+
+          const hour = String(entryDate.getUTCHours()).padStart(2, "0");
+          hourlyMap[hour] = (hourlyMap[hour] ?? 0) + (parsed.usedWater ?? 0);
+        }
+
+        if (Object.keys(hourlyMap).length === 0) {
+          return {
+            success: false,
+            message: "Data per jam tidak ditemukan untuk tanggal tersebut",
+            data: null,
+          };
+        }
+
+        for (const h of Object.keys(hourlyMap)) {
+          hourlyMap[h] = Math.round(hourlyMap[h] * 100) / 100;
+        }
+
+        data = hourlyMap;
+      } else {
+        // ── Baca dari MongoDB (data sudah dimigrasikan) ───────────────
+        const start = new Date(`${tanggal}T00:00:00.000Z`);
+        const end = new Date(`${tanggal}T23:59:59.999Z`);
+
+        const result = await RiwayatPenggunaan.aggregate([
+          {
+            $match: {
+              MeterID: meteranId,
+              timestamp: { $gte: start, $lte: end },
+            },
+          },
+          {
+            $group: {
+              _id: { $hour: "$timestamp" },
+              total: { $sum: "$PenggunaanAir" },
+            },
+          },
+          { $sort: { _id: 1 } },
+        ]);
+
+        if (result.length === 0) {
+          return {
+            success: false,
+            message: "Data per jam tidak ditemukan",
+            data: null,
+          };
+        }
+
+        const hourlyMap: HourlyUsageData = {};
+        for (const row of result) {
+          const hour = String(row._id).padStart(2, "0");
+          hourlyMap[hour] = Math.round(row.total * 100) / 100;
+        }
+
+        data = hourlyMap;
+      }
+
+      await setRedisData(cacheKey, JSON.stringify(data), ttl);
       return {
         success: true,
         message: "Berhasil mendapatkan data per jam",
@@ -929,15 +906,9 @@ export class MonitoringService {
   }
 
   /**
-   * Mendapatkan data penggunaan harian untuk bulan tertentu
-   *
-   * Otomatis memilih sumber data:
-   * - Bulan berjalan → Redis (IoT real-time)
-   * - Bulan sebelumnya → MongoDB (arsip)
-   *
-   * @param meteranId - ID meteran
-   * @param periode - Periode bulan (YYYY-MM)
-   * @returns MonthlyUsageData atau null
+   * Mendapatkan data penggunaan untuk bulan tertentu.
+   * Bulan berjalan → baca dari Redis IoT List.
+   * Bulan sebelumnya → baca dari MongoDB agregasi.
    */
   static async getMonthlyUsage(
     meteranId: string | Types.ObjectId,
@@ -948,6 +919,7 @@ export class MonitoringService {
     data: MonthlyUsageData | null;
   }> {
     try {
+      const meteranIdStr = meteranId.toString();
       const meter = await Meter.findById(meteranId);
       if (!meter) {
         return {
@@ -957,18 +929,16 @@ export class MonitoringService {
         };
       }
 
-      const now = new Date();
-      const currentPeriode = getPeriode(now);
-      const meteranIdStr = meteranId.toString();
-
+      const currentPeriode = getPeriode(new Date());
       let data: MonthlyUsageData | null = null;
 
       if (periode === currentPeriode) {
-        // Bulan berjalan - ambil dari Redis
-        data = await getRedisMonthlyUsage(meteranIdStr, periode);
+        const userId = await getUserIdFromMeter(meteranIdStr);
+        if (userId) {
+          data = await getRedisMonthlyUsage(meteranIdStr, userId, periode);
+        }
       } else {
-        // Bulan sebelumnya - ambil dari MongoDB
-        data = await getMongoMonthlyUsage(meteranId, periode);
+        data = await getMongoMonthlyUsage(meteranIdStr, periode);
       }
 
       return {
