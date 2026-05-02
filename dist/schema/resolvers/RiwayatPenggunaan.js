@@ -10,9 +10,9 @@ exports.riwayatPenggunaanResolvers = {
     },
     RiwayatPenggunaan: {
         id: (parent) => parent._id?.toString() || parent.id,
-        meteranId: (parent) => parent.MeteranId,
-        meteran: (parent) => parent.MeteranId,
+        meteranId: (parent) => parent.MeterID,
         penggunaanAir: (parent) => parent.PenggunaanAir,
+        timestamp: (parent) => parent.timestamp?.toISOString?.() ?? parent.timestamp,
     },
 };
 //# sourceMappingURL=RiwayatPenggunaan.js.map

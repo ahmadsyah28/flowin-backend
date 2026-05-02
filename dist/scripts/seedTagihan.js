@@ -57,16 +57,33 @@ async function main() {
         console.log(`     Tarif tinggi : Rp${kelompok.TarifTinggi.toLocaleString()}/m³ (>${kelompok.BatasRendah} m³)`);
         console.log(`     Biaya beban  : Rp${kelompok.BiayaBeban.toLocaleString()}`);
         console.log("\n📍 Step 3: Ambil data penggunaan dari RiwayatPenggunaan...");
-        const riwayatJan = await RiwayatPenggunaan_1.RiwayatPenggunaan.findOne({
-            MeteranId: meter._id,
-            Periode: "2026-01",
-        });
-        const riwayatFeb = await RiwayatPenggunaan_1.RiwayatPenggunaan.findOne({
-            MeteranId: meter._id,
-            Periode: "2026-02",
-        });
-        const penggunaanJanLiter = riwayatJan?.TotalPenggunaan ?? 7500;
-        const penggunaanFebLiter = riwayatFeb?.TotalPenggunaan ?? 8200;
+        const meterIdStr = meter._id.toString();
+        const aggJan = await RiwayatPenggunaan_1.RiwayatPenggunaan.aggregate([
+            {
+                $match: {
+                    MeterID: meterIdStr,
+                    timestamp: {
+                        $gte: new Date("2026-01-01T00:00:00Z"),
+                        $lt: new Date("2026-02-01T00:00:00Z"),
+                    },
+                },
+            },
+            { $group: { _id: null, total: { $sum: "$PenggunaanAir" } } },
+        ]);
+        const aggFeb = await RiwayatPenggunaan_1.RiwayatPenggunaan.aggregate([
+            {
+                $match: {
+                    MeterID: meterIdStr,
+                    timestamp: {
+                        $gte: new Date("2026-02-01T00:00:00Z"),
+                        $lt: new Date("2026-03-01T00:00:00Z"),
+                    },
+                },
+            },
+            { $group: { _id: null, total: { $sum: "$PenggunaanAir" } } },
+        ]);
+        const penggunaanJanLiter = aggJan.length > 0 ? aggJan[0].total : 7500;
+        const penggunaanFebLiter = aggFeb.length > 0 ? aggFeb[0].total : 8200;
         const penggunaanMarLiter = Math.round((Math.random() * (3500 - 2500) + 2500) * 10) / 10;
         const penggunaanJanM3 = Math.round((penggunaanJanLiter / 1000) * 100) / 100;
         const penggunaanFebM3 = Math.round((penggunaanFebLiter / 1000) * 100) / 100;

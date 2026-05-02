@@ -14,7 +14,6 @@ export interface MonthlyUsageData {
     periode: string;
     totalPenggunaan: number;
     dataHarian: DailyUsageData;
-    dataPerJam?: DailyUsageData;
     sumber: "redis" | "mongodb";
 }
 export interface UsageComparison {

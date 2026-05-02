@@ -14,4 +14,5 @@ export declare const hincrby: (key: string, field: string, increment: number) =>
 export declare const expireKey: (key: string, seconds: number) => Promise<number>;
 export declare const existsKey: (key: string) => Promise<number>;
 export declare const getKeys: (pattern: string) => Promise<string[]>;
+export declare const lrange: (key: string, start: number, stop: number) => Promise<unknown[]>;
 //# sourceMappingURL=redis.d.ts.map

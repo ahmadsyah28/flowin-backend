@@ -1,14 +1,12 @@
-import mongoose, { Types } from "mongoose";
-import { IBaseDocument } from "./BaseModel";
-export interface IRiwayatPenggunaan extends IBaseDocument {
-    MeteranId: Types.ObjectId;
-    Periode: string;
-    TotalPenggunaan: number;
-    DataHarian: Map<string, number>;
-    DataPerJam: Map<string, number>;
+import mongoose, { Document } from "mongoose";
+export interface IRiwayatPenggunaan extends Document {
+    MeterID: string;
+    UserID: string;
+    PenggunaanAir: number;
+    timestamp: Date;
 }
 export declare const RiwayatPenggunaan: mongoose.Model<IRiwayatPenggunaan, {}, {}, {}, mongoose.Document<unknown, {}, IRiwayatPenggunaan, {}, mongoose.DefaultSchemaOptions> & IRiwayatPenggunaan & Required<{
-    _id: Types.ObjectId;
+    _id: mongoose.Types.ObjectId;
 }> & {
     __v: number;
 } & {

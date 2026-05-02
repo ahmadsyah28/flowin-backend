@@ -1,11 +1,15 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.MonitoringService = void 0;
-const mongoose_1 = require("mongoose");
-const models_1 = require("../models");
+const RiwayatPenggunaan_1 = require("../models/RiwayatPenggunaan");
 const Meter_1 = require("../models/Meter");
 const KelompokPelanggan_1 = require("../models/KelompokPelanggan");
 const redis_1 = require("../config/redis");
+const TTL_LATEST = 60;
+const TTL_MONTHLY_CURRENT = 300;
+const TTL_MONTHLY_PAST = 21600;
+const TTL_STATS = 900;
+const TTL_DASHBOARD = 300;
 function getDaysInMonth(year, month) {
     return new Date(year, month, 0).getDate();
 }
@@ -45,79 +49,136 @@ function hitungTagihan(kelompok, pemakaianM3) {
         total: Math.round(biayaPemakaian) + kelompok.BiayaBeban,
     };
 }
-async function getRedisMonthlyUsage(meteranId, periode) {
+async function getUserIdFromMeter(meterId) {
     try {
-        const dailyKey = `usage:${meteranId}:${periode}:daily`;
-        const totalKey = `usage:${meteranId}:${periode}:total`;
-        const dailyData = await (0, redis_1.hgetall)(dailyKey);
-        const totalStr = await (0, redis_1.getRedisData)(totalKey);
-        const total = totalStr !== null && totalStr !== undefined
-            ? typeof totalStr === "number"
-                ? totalStr
-                : parseFloat(totalStr)
-            : 0;
-        if (!dailyData && (totalStr === null || totalStr === undefined)) {
+        const meter = await Meter_1.Meter.findById(meterId).populate({
+            path: "IdKoneksiData",
+            select: "IdPelanggan",
+        });
+        if (!meter || !meter.IdKoneksiData)
             return null;
-        }
-        const dataHarian = {};
-        if (dailyData) {
-            Object.entries(dailyData).forEach(([date, value]) => {
-                dataHarian[date] =
-                    typeof value === "number" ? value : parseFloat(value);
-            });
-        }
-        return {
-            periode,
-            totalPenggunaan: total,
-            dataHarian,
-            sumber: "redis",
-        };
+        const koneksi = meter.IdKoneksiData;
+        return koneksi.IdPelanggan?.toString() ?? null;
     }
-    catch (error) {
-        console.error(`Error getting Redis data for ${meteranId}:`, error);
+    catch {
         return null;
     }
 }
-async function getLatestReading(meteranId) {
+async function getLatestReading(meteranId, userId) {
+    const cacheKey = `cache:monitoring:${meteranId}:latest`;
     try {
-        const latestKey = `usage:${meteranId}:latest`;
-        const data = await (0, redis_1.getRedisData)(latestKey);
-        if (!data) {
-            return null;
+        const cached = await (0, redis_1.getRedisData)(cacheKey);
+        if (cached) {
+            return typeof cached === "string"
+                ? JSON.parse(cached)
+                : cached;
         }
-        const parsed = typeof data === "string" ? JSON.parse(data) : data;
-        return {
-            volume: parsed.volume || 0,
-            timestamp: parsed.timestamp || new Date().toISOString(),
+        const iotKey = `iot:${userId}:${meteranId}`;
+        const entries = await (0, redis_1.lrange)(iotKey, -1, -1);
+        if (!entries || entries.length === 0)
+            return null;
+        const raw = entries[0];
+        const parsed = typeof raw === "string" ? JSON.parse(raw) : raw;
+        const result = {
+            volume: parsed.usedWater ?? 0,
+            timestamp: new Date(parsed.ts).toISOString(),
             meteranId,
         };
+        await (0, redis_1.setRedisData)(cacheKey, JSON.stringify(result), TTL_LATEST);
+        return result;
     }
     catch (error) {
         console.error(`Error getting latest reading for ${meteranId}:`, error);
         return null;
     }
 }
-async function getMongoMonthlyUsage(meteranId, periode) {
+async function getRedisMonthlyUsage(meteranId, userId, periode) {
+    const cacheKey = `cache:monitoring:${meteranId}:${periode}:monthly`;
     try {
-        const riwayat = await models_1.RiwayatPenggunaan.findOne({
-            MeteranId: meteranId,
-            Periode: periode,
-        });
-        if (!riwayat) {
+        const cached = await (0, redis_1.getRedisData)(cacheKey);
+        if (cached) {
+            return typeof cached === "string"
+                ? JSON.parse(cached)
+                : cached;
+        }
+        const iotKey = `iot:${userId}:${meteranId}`;
+        const entries = await (0, redis_1.lrange)(iotKey, 0, -1);
+        if (!entries || entries.length === 0)
             return null;
-        }
         const dataHarian = {};
-        if (riwayat.DataHarian) {
-            riwayat.DataHarian.forEach((value, key) => {
-                dataHarian[key] = value;
-            });
+        let total = 0;
+        for (const raw of entries) {
+            const parsed = typeof raw === "string" ? JSON.parse(raw) : raw;
+            const entryDate = new Date(parsed.ts);
+            if (getPeriode(entryDate) !== periode)
+                continue;
+            const day = String(entryDate.getDate()).padStart(2, "0");
+            const volume = parsed.usedWater ?? 0;
+            dataHarian[day] = (dataHarian[day] ?? 0) + volume;
+            total += volume;
         }
-        return {
-            periode: riwayat.Periode,
-            totalPenggunaan: riwayat.TotalPenggunaan,
+        if (total === 0 && Object.keys(dataHarian).length === 0)
+            return null;
+        const result = {
+            periode,
+            totalPenggunaan: Math.round(total * 100) / 100,
+            dataHarian,
+            sumber: "redis",
+        };
+        await (0, redis_1.setRedisData)(cacheKey, JSON.stringify(result), TTL_MONTHLY_CURRENT);
+        return result;
+    }
+    catch (error) {
+        console.error(`Error getting Redis IoT data for ${meteranId}:`, error);
+        return null;
+    }
+}
+async function getMongoMonthlyUsage(meteranId, periode) {
+    const isCurrent = periode === getPeriode(new Date());
+    const ttl = isCurrent ? TTL_MONTHLY_CURRENT : TTL_MONTHLY_PAST;
+    const cacheKey = `cache:monitoring:${meteranId}:${periode}:monthly`;
+    try {
+        const cached = await (0, redis_1.getRedisData)(cacheKey);
+        if (cached) {
+            return typeof cached === "string"
+                ? JSON.parse(cached)
+                : cached;
+        }
+        const start = new Date(`${periode}-01T00:00:00.000Z`);
+        const end = new Date(start);
+        end.setMonth(end.getMonth() + 1);
+        const result = await RiwayatPenggunaan_1.RiwayatPenggunaan.aggregate([
+            {
+                $match: {
+                    MeterID: meteranId,
+                    timestamp: { $gte: start, $lt: end },
+                },
+            },
+            {
+                $group: {
+                    _id: { $dayOfMonth: "$timestamp" },
+                    total: { $sum: "$PenggunaanAir" },
+                },
+            },
+            { $sort: { _id: 1 } },
+        ]);
+        if (result.length === 0)
+            return null;
+        const dataHarian = {};
+        let totalPenggunaan = 0;
+        for (const row of result) {
+            const day = String(row._id).padStart(2, "0");
+            dataHarian[day] = Math.round(row.total * 100) / 100;
+            totalPenggunaan += row.total;
+        }
+        const data = {
+            periode,
+            totalPenggunaan: Math.round(totalPenggunaan * 100) / 100,
             dataHarian,
             sumber: "mongodb",
         };
+        await (0, redis_1.setRedisData)(cacheKey, JSON.stringify(data), ttl);
+        return data;
     }
     catch (error) {
         console.error(`Error getting MongoDB data for ${meteranId}:`, error);
@@ -125,10 +186,17 @@ async function getMongoMonthlyUsage(meteranId, periode) {
     }
 }
 async function getTotalAllTime(meteranId) {
+    const cacheKey = `cache:monitoring:${meteranId}:stats`;
     try {
-        const result = await models_1.RiwayatPenggunaan.aggregate([
-            { $match: { MeteranId: new mongoose_1.Types.ObjectId(meteranId.toString()) } },
-            { $group: { _id: null, total: { $sum: "$TotalPenggunaan" } } },
+        const cached = await (0, redis_1.getRedisData)(cacheKey);
+        if (cached) {
+            const parsed = typeof cached === "string" ? JSON.parse(cached) : cached;
+            if (typeof parsed?.totalAllTime === "number")
+                return parsed.totalAllTime;
+        }
+        const result = await RiwayatPenggunaan_1.RiwayatPenggunaan.aggregate([
+            { $match: { MeterID: meteranId } },
+            { $group: { _id: null, total: { $sum: "$PenggunaanAir" } } },
         ]);
         return result.length > 0 ? result[0].total : 0;
     }
@@ -138,43 +206,82 @@ async function getTotalAllTime(meteranId) {
     }
 }
 async function getMonthlyAverage(meteranId) {
+    const cacheKey = `cache:monitoring:${meteranId}:stats`;
     try {
-        const riwayat = await models_1.RiwayatPenggunaan.find({
-            MeteranId: meteranId,
-        })
-            .sort({ Periode: -1 })
-            .limit(6);
-        if (riwayat.length === 0) {
-            return 0;
+        const cached = await (0, redis_1.getRedisData)(cacheKey);
+        if (cached) {
+            const parsed = typeof cached === "string" ? JSON.parse(cached) : cached;
+            if (typeof parsed?.monthlyAverage === "number")
+                return parsed.monthlyAverage;
         }
-        const total = riwayat.reduce((sum, r) => sum + r.TotalPenggunaan, 0);
-        return Math.round(total / riwayat.length);
+        const sixMonthsAgo = new Date();
+        sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+        const result = await RiwayatPenggunaan_1.RiwayatPenggunaan.aggregate([
+            {
+                $match: {
+                    MeterID: meteranId,
+                    timestamp: { $gte: sixMonthsAgo },
+                },
+            },
+            {
+                $group: {
+                    _id: {
+                        year: { $year: "$timestamp" },
+                        month: { $month: "$timestamp" },
+                    },
+                    total: { $sum: "$PenggunaanAir" },
+                },
+            },
+            { $sort: { "_id.year": -1, "_id.month": -1 } },
+            { $limit: 6 },
+        ]);
+        if (result.length === 0)
+            return 0;
+        const sum = result.reduce((acc, r) => acc + r.total, 0);
+        return Math.round(sum / result.length);
     }
     catch (error) {
         console.error(`Error calculating average for ${meteranId}:`, error);
         return 0;
     }
 }
+async function getStatsWithCache(meteranId, bulanIniTotal) {
+    const cacheKey = `cache:monitoring:${meteranId}:stats`;
+    try {
+        const cached = await (0, redis_1.getRedisData)(cacheKey);
+        if (cached) {
+            const parsed = typeof cached === "string" ? JSON.parse(cached) : cached;
+            if (typeof parsed?.totalAllTime === "number" &&
+                typeof parsed?.monthlyAverage === "number") {
+                return parsed;
+            }
+        }
+        const [totalMongo, monthlyAverage] = await Promise.all([
+            getTotalAllTime(meteranId),
+            getMonthlyAverage(meteranId),
+        ]);
+        const stats = {
+            totalAllTime: totalMongo + bulanIniTotal,
+            monthlyAverage,
+        };
+        await (0, redis_1.setRedisData)(cacheKey, JSON.stringify(stats), TTL_STATS);
+        return stats;
+    }
+    catch {
+        return { totalAllTime: bulanIniTotal, monthlyAverage: 0 };
+    }
+}
 function calculateComparison(bulanIni, bulanLalu) {
     const selisih = bulanIni - bulanLalu;
     const persentase = bulanLalu > 0 ? Math.round((selisih / bulanLalu) * 100) : 0;
     let status;
-    if (selisih > 0) {
+    if (selisih > 0)
         status = "naik";
-    }
-    else if (selisih < 0) {
+    else if (selisih < 0)
         status = "turun";
-    }
-    else {
+    else
         status = "sama";
-    }
-    return {
-        bulanIni,
-        bulanLalu,
-        selisih,
-        persentase,
-        status,
-    };
+    return { bulanIni, bulanLalu, selisih, persentase, status };
 }
 function calculatePrediction(penggunaanSaatIni, tanggalHariIni) {
     const tahun = tanggalHariIni.getFullYear();
@@ -214,13 +321,7 @@ function evaluateUsage(rataRataBulanan) {
         deskripsi =
             "Penggunaan air Anda cukup tinggi. Pertimbangkan untuk menghemat penggunaan air.";
     }
-    return {
-        kategori,
-        deskripsi,
-        rataRataBulanan,
-        batasHemat,
-        batasBoros,
-    };
+    return { kategori, deskripsi, rataRataBulanan, batasHemat, batasBoros };
 }
 function buildDailyChart(bulanIni, bulanLalu, tanggalHariIni) {
     const result = [];
@@ -237,17 +338,22 @@ function buildDailyChart(bulanIni, bulanLalu, tanggalHariIni) {
         else if (bulanLalu && periode === bulanLalu.periode) {
             liter = bulanLalu.dataHarian[tanggal] || 0;
         }
-        result.push({
-            tanggal: displayDate,
-            liter: Math.round(liter),
-        });
+        result.push({ tanggal: displayDate, liter: Math.round(liter) });
     }
     return result;
 }
 class MonitoringService {
     static async getDashboard(meteranId) {
+        const meteranIdStr = meteranId.toString();
+        const dashboardKey = `cache:monitoring:${meteranIdStr}:dashboard`;
         try {
-            const meter = await Meter_1.Meter.findById(meteranId).populate("IdKelompokPelanggan");
+            const cachedDashboard = await (0, redis_1.getRedisData)(dashboardKey);
+            if (cachedDashboard) {
+                return typeof cachedDashboard === "string"
+                    ? JSON.parse(cachedDashboard)
+                    : cachedDashboard;
+            }
+            const meter = await Meter_1.Meter.findById(meteranId).populate("IdKoneksiData");
             if (!meter) {
                 return {
                     success: false,
@@ -255,31 +361,33 @@ class MonitoringService {
                     data: null,
                 };
             }
-            const meteranIdStr = meteranId.toString();
+            const userId = await getUserIdFromMeter(meteranIdStr);
+            if (!userId) {
+                return {
+                    success: false,
+                    message: "Pengguna untuk meteran tidak ditemukan",
+                    data: null,
+                };
+            }
             const now = new Date();
             const periodeIni = getPeriode(now);
             const periodeLalu = getPreviousPeriode(now);
-            const bulanIni = await getRedisMonthlyUsage(meteranIdStr, periodeIni);
-            const bulanLalu = await getMongoMonthlyUsage(meteranId, periodeLalu);
-            const latestReading = await getLatestReading(meteranIdStr);
-            const totalMongo = await getTotalAllTime(meteranId);
-            const totalBulanIni = bulanIni?.totalPenggunaan || 0;
-            const totalKeseluruhan = totalMongo + totalBulanIni;
-            const rataRataBulanan = await getMonthlyAverage(meteranId);
-            let perbandingan = null;
-            if (bulanLalu) {
-                perbandingan = calculateComparison(totalBulanIni, bulanLalu.totalPenggunaan);
-            }
-            let prediksi = null;
-            if (totalBulanIni > 0) {
-                prediksi = calculatePrediction(totalBulanIni, now);
-            }
-            const evaluasi = evaluateUsage(rataRataBulanan > 0 ? rataRataBulanan : totalBulanIni);
+            const [bulanIni, bulanLalu, latestReading] = await Promise.all([
+                getRedisMonthlyUsage(meteranIdStr, userId, periodeIni),
+                getMongoMonthlyUsage(meteranIdStr, periodeLalu),
+                getLatestReading(meteranIdStr, userId),
+            ]);
+            const totalBulanIni = bulanIni?.totalPenggunaan ?? 0;
+            const { totalAllTime, monthlyAverage } = await getStatsWithCache(meteranIdStr, totalBulanIni);
+            const perbandingan = bulanLalu
+                ? calculateComparison(totalBulanIni, bulanLalu.totalPenggunaan)
+                : null;
+            const prediksi = totalBulanIni > 0 ? calculatePrediction(totalBulanIni, now) : null;
+            const evaluasi = evaluateUsage(monthlyAverage > 0 ? monthlyAverage : totalBulanIni);
             let estimasiTagihan = null;
             const kelompok = await KelompokPelanggan_1.KelompokPelanggan.findById(meter.IdKelompokPelanggan);
             if (kelompok) {
-                const pemakaianLiter = totalBulanIni;
-                const pemakaianM3 = literToM3(pemakaianLiter);
+                const pemakaianM3 = literToM3(totalBulanIni);
                 const tagihan = hitungTagihan(kelompok, pemakaianM3);
                 estimasiTagihan = {
                     pemakaianM3: Math.round(pemakaianM3 * 100) / 100,
@@ -297,7 +405,7 @@ class MonitoringService {
                 };
             }
             const chartHarian = buildDailyChart(bulanIni, bulanLalu, now);
-            return {
+            const response = {
                 success: true,
                 message: "Berhasil mendapatkan data monitoring",
                 data: {
@@ -309,8 +417,8 @@ class MonitoringService {
                     latestReading,
                     bulanIni,
                     bulanLalu,
-                    totalKeseluruhan,
-                    rataRataBulanan,
+                    totalKeseluruhan: totalAllTime,
+                    rataRataBulanan: monthlyAverage,
                     perbandingan,
                     prediksi,
                     evaluasi,
@@ -318,6 +426,8 @@ class MonitoringService {
                     chartHarian,
                 },
             };
+            await (0, redis_1.setRedisData)(dashboardKey, JSON.stringify(response), TTL_DASHBOARD);
+            return response;
         }
         catch (error) {
             console.error("Error in MonitoringService.getDashboard:", error);
@@ -330,29 +440,21 @@ class MonitoringService {
     }
     static async getHistory(meteranId, jumlahBulan = 6) {
         try {
-            const riwayat = await models_1.RiwayatPenggunaan.find({
-                MeteranId: meteranId,
-            })
-                .sort({ Periode: -1 })
-                .limit(jumlahBulan);
-            const data = riwayat.map((r) => {
-                const dataHarian = {};
-                if (r.DataHarian) {
-                    r.DataHarian.forEach((value, key) => {
-                        dataHarian[key] = value;
-                    });
-                }
-                return {
-                    periode: r.Periode,
-                    totalPenggunaan: r.TotalPenggunaan,
-                    dataHarian,
-                    sumber: "mongodb",
-                };
-            });
+            const meteranIdStr = meteranId.toString();
+            const now = new Date();
+            const results = [];
+            for (let i = 1; i <= jumlahBulan; i++) {
+                const d = new Date(now);
+                d.setMonth(d.getMonth() - i);
+                const periode = getPeriode(d);
+                const data = await getMongoMonthlyUsage(meteranIdStr, periode);
+                if (data)
+                    results.push(data);
+            }
             return {
                 success: true,
                 message: "Berhasil mendapatkan riwayat penggunaan",
-                data,
+                data: results,
             };
         }
         catch (error) {
@@ -364,21 +466,97 @@ class MonitoringService {
         }
     }
     static async getHourlyUsage(meteranId, tanggal) {
+        const cacheKey = `cache:monitoring:${meteranId}:${tanggal}:hourly`;
         try {
-            const hourlyKey = `usage:${meteranId}:${tanggal}:hourly`;
-            const hourlyData = await (0, redis_1.hgetall)(hourlyKey);
-            if (!hourlyData) {
+            const cached = await (0, redis_1.getRedisData)(cacheKey);
+            if (cached) {
+                const parsed = typeof cached === "string" ? JSON.parse(cached) : cached;
                 return {
-                    success: false,
-                    message: "Data per jam tidak ditemukan untuk tanggal tersebut",
-                    data: null,
+                    success: true,
+                    message: "Berhasil mendapatkan data per jam",
+                    data: parsed,
                 };
             }
-            const data = {};
-            Object.entries(hourlyData).forEach(([hour, value]) => {
-                data[hour] =
-                    typeof value === "number" ? value : parseFloat(String(value));
-            });
+            const tanggalDate = new Date(`${tanggal}T00:00:00.000Z`);
+            const sevenDaysAgo = new Date();
+            sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+            sevenDaysAgo.setHours(0, 0, 0, 0);
+            const isInRedis = tanggalDate >= sevenDaysAgo;
+            const isToday = tanggal === new Date().toISOString().slice(0, 10);
+            const ttl = isToday ? TTL_MONTHLY_CURRENT : TTL_MONTHLY_PAST;
+            let data = null;
+            if (isInRedis) {
+                const userId = await getUserIdFromMeter(meteranId);
+                if (!userId) {
+                    return {
+                        success: false,
+                        message: "Pengguna untuk meteran tidak ditemukan",
+                        data: null,
+                    };
+                }
+                const iotKey = `iot:${userId}:${meteranId}`;
+                const entries = await (0, redis_1.lrange)(iotKey, 0, -1);
+                if (!entries || entries.length === 0) {
+                    return {
+                        success: false,
+                        message: "Data per jam tidak ditemukan",
+                        data: null,
+                    };
+                }
+                const hourlyMap = {};
+                for (const raw of entries) {
+                    const parsed = typeof raw === "string" ? JSON.parse(raw) : raw;
+                    const entryDate = new Date(parsed.ts);
+                    if (entryDate.toISOString().slice(0, 10) !== tanggal)
+                        continue;
+                    const hour = String(entryDate.getUTCHours()).padStart(2, "0");
+                    hourlyMap[hour] = (hourlyMap[hour] ?? 0) + (parsed.usedWater ?? 0);
+                }
+                if (Object.keys(hourlyMap).length === 0) {
+                    return {
+                        success: false,
+                        message: "Data per jam tidak ditemukan untuk tanggal tersebut",
+                        data: null,
+                    };
+                }
+                for (const h of Object.keys(hourlyMap)) {
+                    hourlyMap[h] = Math.round(hourlyMap[h] * 100) / 100;
+                }
+                data = hourlyMap;
+            }
+            else {
+                const start = new Date(`${tanggal}T00:00:00.000Z`);
+                const end = new Date(`${tanggal}T23:59:59.999Z`);
+                const result = await RiwayatPenggunaan_1.RiwayatPenggunaan.aggregate([
+                    {
+                        $match: {
+                            MeterID: meteranId,
+                            timestamp: { $gte: start, $lte: end },
+                        },
+                    },
+                    {
+                        $group: {
+                            _id: { $hour: "$timestamp" },
+                            total: { $sum: "$PenggunaanAir" },
+                        },
+                    },
+                    { $sort: { _id: 1 } },
+                ]);
+                if (result.length === 0) {
+                    return {
+                        success: false,
+                        message: "Data per jam tidak ditemukan",
+                        data: null,
+                    };
+                }
+                const hourlyMap = {};
+                for (const row of result) {
+                    const hour = String(row._id).padStart(2, "0");
+                    hourlyMap[hour] = Math.round(row.total * 100) / 100;
+                }
+                data = hourlyMap;
+            }
+            await (0, redis_1.setRedisData)(cacheKey, JSON.stringify(data), ttl);
             return {
                 success: true,
                 message: "Berhasil mendapatkan data per jam",
@@ -395,6 +573,7 @@ class MonitoringService {
     }
     static async getMonthlyUsage(meteranId, periode) {
         try {
+            const meteranIdStr = meteranId.toString();
             const meter = await Meter_1.Meter.findById(meteranId);
             if (!meter) {
                 return {
@@ -403,15 +582,16 @@ class MonitoringService {
                     data: null,
                 };
             }
-            const now = new Date();
-            const currentPeriode = getPeriode(now);
-            const meteranIdStr = meteranId.toString();
+            const currentPeriode = getPeriode(new Date());
             let data = null;
             if (periode === currentPeriode) {
-                data = await getRedisMonthlyUsage(meteranIdStr, periode);
+                const userId = await getUserIdFromMeter(meteranIdStr);
+                if (userId) {
+                    data = await getRedisMonthlyUsage(meteranIdStr, userId, periode);
+                }
             }
             else {
-                data = await getMongoMonthlyUsage(meteranId, periode);
+                data = await getMongoMonthlyUsage(meteranIdStr, periode);
             }
             return {
                 success: true,

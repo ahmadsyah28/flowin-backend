@@ -1,1 +1,1 @@
-{"version":3,"file":"RiwayatPenggunaan.d.ts","sourceRoot":"","sources":["../../../src/schema/resolvers/RiwayatPenggunaan.ts"],"names":[],"mappings":"AAEA,eAAO,MAAM,0BAA0B;;+BAEN,GAAG,iBAAiB;YAAE,SAAS,EAAE,MAAM,CAAA;SAAE;;;qBAOzD,GAAG;4BACI,GAAG;0BACL,GAAG;gCACG,GAAG;;CAE9B,CAAC"}
+{"version":3,"file":"RiwayatPenggunaan.d.ts","sourceRoot":"","sources":["../../../src/schema/resolvers/RiwayatPenggunaan.ts"],"names":[],"mappings":"AAEA,eAAO,MAAM,0BAA0B;;+BAEN,GAAG,iBAAiB;YAAE,SAAS,EAAE,MAAM,CAAA;SAAE;;;qBAOzD,GAAG;4BACI,GAAG;gCACC,GAAG;4BACP,GAAG;;CAG1B,CAAC"}

@@ -1,4 +1,3 @@
-import { Types } from "mongoose";
 import { IRiwayatPenggunaan } from "../models/RiwayatPenggunaan";
 export interface RiwayatPenggunaanListResponse {
     success: boolean;
@@ -7,6 +6,6 @@ export interface RiwayatPenggunaanListResponse {
     total: number;
 }
 export declare class RiwayatPenggunaanService {
-    static getRiwayatPenggunaan(meteranId: string | Types.ObjectId): Promise<RiwayatPenggunaanListResponse>;
+    static getRiwayatPenggunaan(meteranId: string): Promise<RiwayatPenggunaanListResponse>;
 }
 //# sourceMappingURL=RiwayatPenggunaanService.d.ts.map

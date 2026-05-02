@@ -35,40 +35,12 @@ var __importStar = (this && this.__importStar) || (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.RiwayatPenggunaan = void 0;
 const mongoose_1 = __importStar(require("mongoose"));
-const BaseModel_1 = require("./BaseModel");
 const riwayatPenggunaanSchema = new mongoose_1.Schema({
-    MeteranId: {
-        type: mongoose_1.Schema.Types.ObjectId,
-        ref: "Meter",
-        required: [true, "Meteran ID is required"],
-        index: true,
-    },
-    Periode: {
-        type: String,
-        required: [true, "Periode is required"],
-        match: [/^\d{4}-\d{2}$/, "Periode must be in YYYY-MM format"],
-        index: true,
-    },
-    TotalPenggunaan: {
-        type: Number,
-        required: [true, "Total Penggunaan is required"],
-        min: [0, "Total Penggunaan cannot be negative"],
-        default: 0,
-    },
-    DataHarian: {
-        type: Map,
-        of: Number,
-        default: new Map(),
-    },
-    DataPerJam: {
-        type: Map,
-        of: Number,
-        default: new Map(),
-    },
-    ...BaseModel_1.baseSchemaFields,
+    MeterID: { type: String, required: true, index: true },
+    UserID: { type: String, required: true, index: true },
+    PenggunaanAir: { type: Number, required: true },
+    timestamp: { type: Date, required: true, index: true },
 });
-riwayatPenggunaanSchema.index({ MeteranId: 1, Periode: -1 });
-riwayatPenggunaanSchema.index({ MeteranId: 1, Periode: 1 }, { unique: true });
-(0, BaseModel_1.addBaseMiddleware)(riwayatPenggunaanSchema);
-exports.RiwayatPenggunaan = mongoose_1.default.model("RiwayatPenggunaan", riwayatPenggunaanSchema);
+riwayatPenggunaanSchema.index({ MeterID: 1, timestamp: -1 });
+exports.RiwayatPenggunaan = mongoose_1.default.model("RiwayatPenggunaan", riwayatPenggunaanSchema, "riwayatpenggunaans");
 //# sourceMappingURL=RiwayatPenggunaan.js.map

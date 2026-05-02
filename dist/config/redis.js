@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getKeys = exports.existsKey = exports.expireKey = exports.hincrby = exports.hincrbyfloat = exports.hmget = exports.hgetall = exports.hget = exports.hset = exports.deleteRedisData = exports.getRedisData = exports.setRedisData = exports.pingRedis = exports.getRedisClient = exports.connectRedis = void 0;
+exports.lrange = exports.getKeys = exports.existsKey = exports.expireKey = exports.hincrby = exports.hincrbyfloat = exports.hmget = exports.hgetall = exports.hget = exports.hset = exports.deleteRedisData = exports.getRedisData = exports.setRedisData = exports.pingRedis = exports.getRedisClient = exports.connectRedis = void 0;
 const redis_1 = require("@upstash/redis");
 const index_1 = require("./index");
 let redisClient = null;
@@ -180,4 +180,15 @@ const getKeys = async (pattern) => {
     }
 };
 exports.getKeys = getKeys;
+const lrange = async (key, start, stop) => {
+    try {
+        const client = (0, exports.getRedisClient)();
+        return await client.lrange(key, start, stop);
+    }
+    catch (error) {
+        console.error("❌ Redis LRANGE failed:", error instanceof Error ? error.message : "Unknown error");
+        throw error;
+    }
+};
+exports.lrange = lrange;
 //# sourceMappingURL=redis.js.map

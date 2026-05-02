@@ -2,14 +2,12 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.riwayatPenggunaanTypeDefs = void 0;
 exports.riwayatPenggunaanTypeDefs = `
-  # Type untuk data riwayat penggunaan
+  # Type untuk data riwayat penggunaan (raw IoT records)
   type RiwayatPenggunaan {
     id: ObjectId!
-    meteranId: ObjectId!
-    meteran: Meter
+    meteranId: String!
     penggunaanAir: Float!
-    createdAt: Date!
-    updatedAt: Date!
+    timestamp: Date!
   }
 
   # Response untuk operasi riwayat penggunaan
@@ -21,8 +19,8 @@ exports.riwayatPenggunaanTypeDefs = `
   }
 
   extend type Query {
-    # Mendapatkan riwayat penggunaan air
-    riwayatPenggunaan(meteranId: ObjectId!): RiwayatPenggunaanListResponse!
+    # Mendapatkan riwayat penggunaan air berdasarkan meteranId (string)
+    riwayatPenggunaan(meteranId: String!): RiwayatPenggunaanListResponse!
   }
 `;
 //# sourceMappingURL=RiwayatPenggunaan.js.map
