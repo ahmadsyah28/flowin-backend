@@ -32,6 +32,7 @@
     "@upstash/redis": "^1.36.2",
     "axios": "^1.13.5",
     "bcryptjs": "^2.4.3",
+    "cloudinary": "^2.10.0",
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
@@ -41,6 +42,7 @@
     "lodash": "^4.17.23",
     "midtrans-client": "^1.4.3",
     "mongoose": "^9.1.5",
+    "multer": "^2.1.1",
     "nodemailer": "^8.0.5",
     "redis": "^4.7.0"
   },
@@ -52,6 +54,7 @@
     "@types/lodash": "^4.17.23",
     "@types/midtrans-client": "^1.4.0",
     "@types/mongoose": "^5.11.96",
+    "@types/multer": "^2.1.0",
     "@types/node": "^25.2.3",
     "@types/nodemailer": "^8.0.0",
     "nodemon": "^3.1.11",

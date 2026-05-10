@@ -9,6 +9,7 @@ export {
   requireVerification,
   requireAdmin,
   setupContext,
+  restAuthMiddleware,
 } from "./authMiddleware";
 
 // Error handling

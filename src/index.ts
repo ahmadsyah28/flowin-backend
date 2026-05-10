@@ -17,6 +17,7 @@ import resolvers from "@/schema/resolvers";
 import { formatGraphQLError } from "@/middlewares";
 import { GraphQLContext } from "@/types";
 import webhookRouter from "@/webhooks/midtransWebhook";
+import uploadRouter from "@/routes/UploadRouter";
 
 // ================================
 // Singleton -- re-used across serverless invocations
@@ -47,8 +48,9 @@ async function initializeServer(): Promise<void> {
   // 4. CORS
   app.use(cors({ origin: config.corsOrigin }));
 
-  // 5. REST webhook route (harus sebelum GraphQL)
+  // 5. REST routes (harus sebelum GraphQL)
   app.use("/api/webhook", express.json(), webhookRouter);
+  app.use("/api", uploadRouter);
 
   // 6. GraphQL middleware
   app.use(

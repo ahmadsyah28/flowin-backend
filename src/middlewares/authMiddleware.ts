@@ -1,3 +1,4 @@
+import { Request, Response, NextFunction } from "express";
 import { GraphQLContext } from "@/types";
 import { verifyToken } from "@/utils/auth";
 import { Pengguna, IPengguna } from "@/models/Pengguna";
@@ -115,4 +116,39 @@ export const setupContext = async (req: any): Promise<GraphQLContext> => {
   }
 
   return context;
+};
+
+/**
+ * Express REST middleware untuk autentikasi JWT.
+ * Attach user ke req.user, atau return 401 jika token tidak valid.
+ */
+export const restAuthMiddleware = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
+  const authHeader = req.headers?.authorization;
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    res.status(401).json({ success: false, message: "Token tidak ditemukan" });
+    return;
+  }
+
+  const token = authHeader.substring(7);
+  try {
+    const payload = verifyToken(token);
+    const user = await Pengguna.findById(payload.userId);
+    if (!user) {
+      res.status(401).json({ success: false, message: "User tidak ditemukan" });
+      return;
+    }
+    (req as any).user = user;
+    next();
+  } catch {
+    res
+      .status(401)
+      .json({
+        success: false,
+        message: "Token tidak valid atau sudah kedaluwarsa",
+      });
+  }
 };
