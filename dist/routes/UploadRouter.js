@@ -12,7 +12,10 @@ const upload = (0, multer_1.default)({
     storage: multer_1.default.memoryStorage(),
     limits: { fileSize: 10 * 1024 * 1024 },
     fileFilter: (_, file, cb) => {
-        if (file.mimetype === "application/pdf") {
+        const isPdfMime = file.mimetype === "application/pdf" ||
+            file.mimetype === "application/octet-stream";
+        const isPdfExt = file.originalname.toLowerCase().endsWith(".pdf");
+        if (isPdfMime && isPdfExt) {
             cb(null, true);
         }
         else {
