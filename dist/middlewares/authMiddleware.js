@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.setupContext = exports.requireAdmin = exports.requireVerification = exports.requireAuth = void 0;
+exports.restAuthMiddleware = exports.setupContext = exports.requireAdmin = exports.requireVerification = exports.requireAuth = void 0;
 const auth_1 = require("../utils/auth");
 const Pengguna_1 = require("../models/Pengguna");
 const errors_1 = require("../utils/errors");
@@ -57,4 +57,31 @@ const setupContext = async (req) => {
     return context;
 };
 exports.setupContext = setupContext;
+const restAuthMiddleware = async (req, res, next) => {
+    const authHeader = req.headers?.authorization;
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+        res.status(401).json({ success: false, message: "Token tidak ditemukan" });
+        return;
+    }
+    const token = authHeader.substring(7);
+    try {
+        const payload = (0, auth_1.verifyToken)(token);
+        const user = await Pengguna_1.Pengguna.findById(payload.userId);
+        if (!user) {
+            res.status(401).json({ success: false, message: "User tidak ditemukan" });
+            return;
+        }
+        req.user = user;
+        next();
+    }
+    catch {
+        res
+            .status(401)
+            .json({
+            success: false,
+            message: "Token tidak valid atau sudah kedaluwarsa",
+        });
+    }
+};
+exports.restAuthMiddleware = restAuthMiddleware;
 //# sourceMappingURL=authMiddleware.js.map

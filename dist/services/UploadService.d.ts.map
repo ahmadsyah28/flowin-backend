@@ -1,0 +1,1 @@
+{"version":3,"file":"UploadService.d.ts","sourceRoot":"","sources":["../../src/services/UploadService.ts"],"names":[],"mappings":"AAGA,MAAM,WAAW,YAAY;IAC3B,GAAG,EAAE,MAAM,CAAC;IACZ,QAAQ,EAAE,MAAM,CAAC;CAClB;AAED,qBAAa,aAAa;WACX,cAAc,CACzB,MAAM,EAAE,MAAM,EACd,MAAM,EAAE,MAAM,EACd,OAAO,GAAE,MAAM,CAAC,MAAM,EAAE,MAAM,CAAM,EACpC,IAAI,GAAE,MAAM,EAAO,GAClB,OAAO,CAAC,YAAY,CAAC;CAmBzB"}

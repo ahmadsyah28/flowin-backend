@@ -14,6 +14,7 @@ const typeDefs_1 = require("./schema/typeDefs");
 const resolvers_1 = __importDefault(require("./schema/resolvers"));
 const middlewares_1 = require("./middlewares");
 const midtransWebhook_1 = __importDefault(require("./webhooks/midtransWebhook"));
+const UploadRouter_1 = __importDefault(require("./routes/UploadRouter"));
 const app = (0, express_1.default)();
 let apolloServer = null;
 let isInitialized = false;
@@ -31,6 +32,7 @@ async function initializeServer() {
     await apolloServer.start();
     app.use((0, cors_1.default)({ origin: config_1.config.corsOrigin }));
     app.use("/api/webhook", express_1.default.json(), midtransWebhook_1.default);
+    app.use("/api", UploadRouter_1.default);
     app.use(config_1.config.graphqlPath, express_1.default.json(), async (req, res) => {
         const contextValue = await (0, schema_1.createContext)({ req });
         const result = await apolloServer.executeOperation({
