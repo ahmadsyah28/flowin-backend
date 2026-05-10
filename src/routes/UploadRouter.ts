@@ -9,7 +9,11 @@ const upload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 10 * 1024 * 1024 }, // max 10MB
   fileFilter: (_, file, cb) => {
-    if (file.mimetype === "application/pdf") {
+    const isPdfMime =
+      file.mimetype === "application/pdf" ||
+      file.mimetype === "application/octet-stream";
+    const isPdfExt = file.originalname.toLowerCase().endsWith(".pdf");
+    if (isPdfMime && isPdfExt) {
       cb(null, true);
     } else {
       cb(new Error("Hanya file PDF yang diizinkan"));
