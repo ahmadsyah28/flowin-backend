@@ -45,6 +45,10 @@ const TTL_MONTHLY_PAST = 21600; // 6 jam — bulan lalu (data stabil)
 const TTL_STATS = 900; // 15 menit — total + rata-rata
 const TTL_DASHBOARD = 300; // 5 menit — full dashboard
 
+// Minimum timestamp valid — filter entry IoT dengan ts invalid (pre-NTP boot)
+// Entry dari perangkat sebelum NTP sync memiliki ts = millis() sejak boot (sangat kecil)
+const MIN_VALID_TS = 1577836800000; // 2020-01-01T00:00:00.000Z
+
 // ==========================================
 // INTERFACES
 // ==========================================
@@ -254,7 +258,8 @@ async function getRedisMonthlyUsage(
   userId: string,
   periode: string,
 ): Promise<MonthlyUsageData | null> {
-  const cacheKey = `cache:monitoring:${meteranId}:${periode}:monthly`;
+  // Cache key diberi suffix :redis agar tidak bentrok dengan cache MongoDB
+  const cacheKey = `cache:monitoring:${meteranId}:${periode}:monthly:redis`;
   try {
     const cached = await getRedisData(cacheKey);
     if (cached) {
@@ -273,6 +278,11 @@ async function getRedisMonthlyUsage(
 
     for (const raw of entries) {
       const parsed: any = typeof raw === "string" ? JSON.parse(raw) : raw;
+
+      // Filter entry dengan ts tidak valid (misal dari pre-NTP boot IoT)
+      // ts seperti 31874 = millis sejak boot, bukan Unix epoch
+      if (!parsed.ts || parsed.ts < MIN_VALID_TS) continue;
+
       const entryDate = new Date(parsed.ts);
       if (getPeriode(entryDate) !== periode) continue;
 
@@ -314,7 +324,8 @@ async function getMongoMonthlyUsage(
 ): Promise<MonthlyUsageData | null> {
   const isCurrent = periode === getPeriode(new Date());
   const ttl = isCurrent ? TTL_MONTHLY_CURRENT : TTL_MONTHLY_PAST;
-  const cacheKey = `cache:monitoring:${meteranId}:${periode}:monthly`;
+  // Cache key diberi suffix :mongo agar tidak bentrok dengan cache Redis
+  const cacheKey = `cache:monitoring:${meteranId}:${periode}:monthly:mongo`;
 
   try {
     const cached = await getRedisData(cacheKey);
@@ -579,6 +590,36 @@ function buildDailyChart(
   return result;
 }
 
+/**
+ * Gabungkan data bulan dari dua sumber: Redis (7 hari terakhir) dan MongoDB
+ * (hari-hari awal bulan yang sudah dimigrasi oleh cron).
+ *
+ * Kedua sumber berisi hari yang berbeda — tidak ada overlap karena cron
+ * memindahkan data dari Redis ke MongoDB setelah entry berumur > 7 hari.
+ */
+function mergeMonthlyData(
+  redis: MonthlyUsageData | null,
+  mongo: MonthlyUsageData | null,
+): MonthlyUsageData | null {
+  if (!redis && !mongo) return null;
+  if (!redis) return mongo;
+  if (!mongo) return redis;
+
+  // Mulai dari data MongoDB (hari awal bulan), lalu overlay data Redis (hari terakhir)
+  const dataHarian: DailyUsageData = { ...mongo.dataHarian };
+  for (const [day, liter] of Object.entries(redis.dataHarian)) {
+    dataHarian[day] = (dataHarian[day] ?? 0) + liter;
+  }
+
+  return {
+    periode: redis.periode,
+    totalPenggunaan:
+      Math.round((mongo.totalPenggunaan + redis.totalPenggunaan) * 100) / 100,
+    dataHarian,
+    sumber: "redis",
+  };
+}
+
 // ==========================================
 // MAIN SERVICE CLASS
 // ==========================================
@@ -637,12 +678,15 @@ export class MonitoringService {
       const periodeLalu = getPreviousPeriode(now);
 
       // Ambil data secara paralel untuk efisiensi
-      const [bulanIni, bulanLalu, latestReading] = await Promise.all([
+      // bulanIni = gabungan Redis (7 hari terakhir) + MongoDB (hari awal bulan yg sudah dimigrasi)
+      const [redisIni, mongoIni, bulanLalu, latestReading] = await Promise.all([
         getRedisMonthlyUsage(meteranIdStr, userId, periodeIni),
+        getMongoMonthlyUsage(meteranIdStr, periodeIni),
         getMongoMonthlyUsage(meteranIdStr, periodeLalu),
         getLatestReading(meteranIdStr, userId),
       ]);
 
+      const bulanIni = mergeMonthlyData(redisIni, mongoIni);
       const totalBulanIni = bulanIni?.totalPenggunaan ?? 0;
 
       // Stats (total all-time + rata-rata bulanan) dengan cache
