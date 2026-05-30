@@ -11,6 +11,7 @@ const TTL_MONTHLY_PAST = 21600;
 const TTL_STATS = 900;
 const TTL_DASHBOARD = 300;
 const MIN_VALID_TS = 1577836800000;
+const WIB_OFFSET_MS = 7 * 60 * 60 * 1000;
 function getDaysInMonth(year, month) {
     return new Date(year, month, 0).getDate();
 }
@@ -112,10 +113,11 @@ async function getRedisMonthlyUsage(meteranId, userId, periode) {
             const parsed = typeof raw === "string" ? JSON.parse(raw) : raw;
             if (!parsed.ts || parsed.ts < MIN_VALID_TS)
                 continue;
-            const entryDate = new Date(parsed.ts);
-            if (getPeriode(entryDate) !== periode)
+            const entryDateWIB = new Date(parsed.ts + WIB_OFFSET_MS);
+            const periodeWIB = `${entryDateWIB.getUTCFullYear()}-${String(entryDateWIB.getUTCMonth() + 1).padStart(2, "0")}`;
+            if (periodeWIB !== periode)
                 continue;
-            const day = String(entryDate.getDate()).padStart(2, "0");
+            const day = String(entryDateWIB.getUTCDate()).padStart(2, "0");
             const volume = parsed.usedWater ?? 0;
             dataHarian[day] = (dataHarian[day] ?? 0) + volume;
             total += volume;
@@ -137,7 +139,8 @@ async function getRedisMonthlyUsage(meteranId, userId, periode) {
     }
 }
 async function getMongoMonthlyUsage(meteranId, periode) {
-    const isCurrent = periode === getPeriode(new Date());
+    const nowWIB = new Date(Date.now() + WIB_OFFSET_MS);
+    const isCurrent = periode === getPeriode(nowWIB);
     const ttl = isCurrent ? TTL_MONTHLY_CURRENT : TTL_MONTHLY_PAST;
     const cacheKey = `cache:monitoring:${meteranId}:${periode}:monthly:mongo`;
     try {
@@ -147,20 +150,20 @@ async function getMongoMonthlyUsage(meteranId, periode) {
                 ? JSON.parse(cached)
                 : cached;
         }
-        const start = new Date(`${periode}-01T00:00:00.000Z`);
-        const end = new Date(start);
-        end.setMonth(end.getMonth() + 1);
+        const [pYear, pMonth] = periode.split("-").map(Number);
+        const nextMonthDate = new Date(Date.UTC(pYear, pMonth, 1));
+        const nextPeriode = `${nextMonthDate.getUTCFullYear()}-${String(nextMonthDate.getUTCMonth() + 1).padStart(2, "0")}`;
         const result = await RiwayatPenggunaan_1.RiwayatPenggunaan.aggregate([
             {
                 $match: {
                     MeterID: meteranId,
-                    timestamp: { $gte: start, $lt: end },
+                    tanggal: { $gte: `${periode}-01`, $lt: `${nextPeriode}-01` },
                 },
             },
             {
                 $group: {
-                    _id: { $dayOfMonth: "$timestamp" },
-                    total: { $sum: "$PenggunaanAir" },
+                    _id: { $substr: ["$tanggal", 8, 2] },
+                    total: { $sum: "$totalPenggunaan" },
                 },
             },
             { $sort: { _id: 1 } },
@@ -199,7 +202,7 @@ async function getTotalAllTime(meteranId) {
         }
         const result = await RiwayatPenggunaan_1.RiwayatPenggunaan.aggregate([
             { $match: { MeterID: meteranId } },
-            { $group: { _id: null, total: { $sum: "$PenggunaanAir" } } },
+            { $group: { _id: null, total: { $sum: "$totalPenggunaan" } } },
         ]);
         return result.length > 0 ? result[0].total : 0;
     }
@@ -217,25 +220,23 @@ async function getMonthlyAverage(meteranId) {
             if (typeof parsed?.monthlyAverage === "number")
                 return parsed.monthlyAverage;
         }
-        const sixMonthsAgo = new Date();
-        sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+        const sixMonthsWIB = new Date(Date.now() + WIB_OFFSET_MS);
+        sixMonthsWIB.setUTCMonth(sixMonthsWIB.getUTCMonth() - 6);
+        const sixMonthsAgoPeriode = `${sixMonthsWIB.getUTCFullYear()}-${String(sixMonthsWIB.getUTCMonth() + 1).padStart(2, "0")}`;
         const result = await RiwayatPenggunaan_1.RiwayatPenggunaan.aggregate([
             {
                 $match: {
                     MeterID: meteranId,
-                    timestamp: { $gte: sixMonthsAgo },
+                    tanggal: { $gte: `${sixMonthsAgoPeriode}-01` },
                 },
             },
             {
                 $group: {
-                    _id: {
-                        year: { $year: "$timestamp" },
-                        month: { $month: "$timestamp" },
-                    },
-                    total: { $sum: "$PenggunaanAir" },
+                    _id: { $substr: ["$tanggal", 0, 7] },
+                    total: { $sum: "$totalPenggunaan" },
                 },
             },
-            { $sort: { "_id.year": -1, "_id.month": -1 } },
+            { $sort: { _id: -1 } },
             { $limit: 6 },
         ]);
         if (result.length === 0)
@@ -391,8 +392,9 @@ class MonitoringService {
                 };
             }
             const now = new Date();
-            const periodeIni = getPeriode(now);
-            const periodeLalu = getPreviousPeriode(now);
+            const nowWIB = new Date(now.getTime() + WIB_OFFSET_MS);
+            const periodeIni = getPeriode(nowWIB);
+            const periodeLalu = getPreviousPeriode(nowWIB);
             const [redisIni, mongoIni, bulanLalu, latestReading] = await Promise.all([
                 getRedisMonthlyUsage(meteranIdStr, userId, periodeIni),
                 getMongoMonthlyUsage(meteranIdStr, periodeIni),
@@ -405,7 +407,7 @@ class MonitoringService {
             const perbandingan = bulanLalu
                 ? calculateComparison(totalBulanIni, bulanLalu.totalPenggunaan)
                 : null;
-            const prediksi = totalBulanIni > 0 ? calculatePrediction(totalBulanIni, now) : null;
+            const prediksi = totalBulanIni > 0 ? calculatePrediction(totalBulanIni, nowWIB) : null;
             const evaluasi = evaluateUsage(monthlyAverage > 0 ? monthlyAverage : totalBulanIni);
             let estimasiTagihan = null;
             const kelompok = await KelompokPelanggan_1.KelompokPelanggan.findById(meter.IdKelompokPelanggan);
@@ -427,7 +429,7 @@ class MonitoringService {
                     },
                 };
             }
-            const chartHarian = buildDailyChart(bulanIni, bulanLalu, now);
+            const chartHarian = buildDailyChart(bulanIni, bulanLalu, nowWIB);
             const response = {
                 success: true,
                 message: "Berhasil mendapatkan data monitoring",
