@@ -10,6 +10,7 @@ const TTL_MONTHLY_CURRENT = 300;
 const TTL_MONTHLY_PAST = 21600;
 const TTL_STATS = 900;
 const TTL_DASHBOARD = 300;
+const MIN_VALID_TS = 1577836800000;
 function getDaysInMonth(year, month) {
     return new Date(year, month, 0).getDate();
 }
@@ -93,7 +94,7 @@ async function getLatestReading(meteranId, userId) {
     }
 }
 async function getRedisMonthlyUsage(meteranId, userId, periode) {
-    const cacheKey = `cache:monitoring:${meteranId}:${periode}:monthly`;
+    const cacheKey = `cache:monitoring:${meteranId}:${periode}:monthly:redis`;
     try {
         const cached = await (0, redis_1.getRedisData)(cacheKey);
         if (cached) {
@@ -109,6 +110,8 @@ async function getRedisMonthlyUsage(meteranId, userId, periode) {
         let total = 0;
         for (const raw of entries) {
             const parsed = typeof raw === "string" ? JSON.parse(raw) : raw;
+            if (!parsed.ts || parsed.ts < MIN_VALID_TS)
+                continue;
             const entryDate = new Date(parsed.ts);
             if (getPeriode(entryDate) !== periode)
                 continue;
@@ -136,7 +139,7 @@ async function getRedisMonthlyUsage(meteranId, userId, periode) {
 async function getMongoMonthlyUsage(meteranId, periode) {
     const isCurrent = periode === getPeriode(new Date());
     const ttl = isCurrent ? TTL_MONTHLY_CURRENT : TTL_MONTHLY_PAST;
-    const cacheKey = `cache:monitoring:${meteranId}:${periode}:monthly`;
+    const cacheKey = `cache:monitoring:${meteranId}:${periode}:monthly:mongo`;
     try {
         const cached = await (0, redis_1.getRedisData)(cacheKey);
         if (cached) {
@@ -342,6 +345,24 @@ function buildDailyChart(bulanIni, bulanLalu, tanggalHariIni) {
     }
     return result;
 }
+function mergeMonthlyData(redis, mongo) {
+    if (!redis && !mongo)
+        return null;
+    if (!redis)
+        return mongo;
+    if (!mongo)
+        return redis;
+    const dataHarian = { ...mongo.dataHarian };
+    for (const [day, liter] of Object.entries(redis.dataHarian)) {
+        dataHarian[day] = (dataHarian[day] ?? 0) + liter;
+    }
+    return {
+        periode: redis.periode,
+        totalPenggunaan: Math.round((mongo.totalPenggunaan + redis.totalPenggunaan) * 100) / 100,
+        dataHarian,
+        sumber: "redis",
+    };
+}
 class MonitoringService {
     static async getDashboard(meteranId) {
         const meteranIdStr = meteranId.toString();
@@ -372,11 +393,13 @@ class MonitoringService {
             const now = new Date();
             const periodeIni = getPeriode(now);
             const periodeLalu = getPreviousPeriode(now);
-            const [bulanIni, bulanLalu, latestReading] = await Promise.all([
+            const [redisIni, mongoIni, bulanLalu, latestReading] = await Promise.all([
                 getRedisMonthlyUsage(meteranIdStr, userId, periodeIni),
+                getMongoMonthlyUsage(meteranIdStr, periodeIni),
                 getMongoMonthlyUsage(meteranIdStr, periodeLalu),
                 getLatestReading(meteranIdStr, userId),
             ]);
+            const bulanIni = mergeMonthlyData(redisIni, mongoIni);
             const totalBulanIni = bulanIni?.totalPenggunaan ?? 0;
             const { totalAllTime, monthlyAverage } = await getStatsWithCache(meteranIdStr, totalBulanIni);
             const perbandingan = bulanLalu
