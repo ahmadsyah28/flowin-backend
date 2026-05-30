@@ -49,6 +49,10 @@ const TTL_DASHBOARD = 300; // 5 menit — full dashboard
 // Entry dari perangkat sebelum NTP sync memiliki ts = millis() sejak boot (sangat kecil)
 const MIN_VALID_TS = 1577836800000; // 2020-01-01T00:00:00.000Z
 
+// Offset WIB (UTC+7) dalam milidetik
+// Digunakan untuk mengonversi UTC epoch ke waktu lokal Indonesia sebelum ekstrak hari/bulan
+const WIB_OFFSET_MS = 7 * 60 * 60 * 1000; // 25200000 ms
+
 // ==========================================
 // INTERFACES
 // ==========================================
@@ -283,10 +287,14 @@ async function getRedisMonthlyUsage(
       // ts seperti 31874 = millis sejak boot, bukan Unix epoch
       if (!parsed.ts || parsed.ts < MIN_VALID_TS) continue;
 
-      const entryDate = new Date(parsed.ts);
-      if (getPeriode(entryDate) !== periode) continue;
+      // Konversi UTC ts ke WIB sebelum ekstrak hari/periode
+      // IoT menyimpan ts sebagai UTC epoch, tapi pengguna di WIB (UTC+7)
+      // Contoh: WIB 00:30 tgl 22 = UTC 17:30 tgl 21 → tanpa koreksi jadi hari 21
+      const entryDateWIB = new Date(parsed.ts + WIB_OFFSET_MS);
+      const periodeWIB = `${entryDateWIB.getUTCFullYear()}-${String(entryDateWIB.getUTCMonth() + 1).padStart(2, "0")}`;
+      if (periodeWIB !== periode) continue;
 
-      const day = String(entryDate.getDate()).padStart(2, "0");
+      const day = String(entryDateWIB.getUTCDate()).padStart(2, "0");
       const volume = parsed.usedWater ?? 0;
       dataHarian[day] = (dataHarian[day] ?? 0) + volume;
       total += volume;
@@ -322,7 +330,9 @@ async function getMongoMonthlyUsage(
   meteranId: string,
   periode: string,
 ): Promise<MonthlyUsageData | null> {
-  const isCurrent = periode === getPeriode(new Date());
+  // isCurrent berbasis WIB agar TTL cache tepat di batas bulan
+  const nowWIB = new Date(Date.now() + WIB_OFFSET_MS);
+  const isCurrent = periode === getPeriode(nowWIB);
   const ttl = isCurrent ? TTL_MONTHLY_CURRENT : TTL_MONTHLY_PAST;
   // Cache key diberi suffix :mongo agar tidak bentrok dengan cache Redis
   const cacheKey = `cache:monitoring:${meteranId}:${periode}:monthly:mongo`;
@@ -335,21 +345,24 @@ async function getMongoMonthlyUsage(
         : (cached as MonthlyUsageData);
     }
 
-    const start = new Date(`${periode}-01T00:00:00.000Z`);
-    const end = new Date(start);
-    end.setMonth(end.getMonth() + 1);
+    // Dokumen MongoDB menggunakan field 'tanggal' (string "YYYY-MM-DD" dalam WIB)
+    // bukan 'timestamp'. Perbandingan string ISO date aman karena format selalu sama.
+    const [pYear, pMonth] = periode.split("-").map(Number);
+    const nextMonthDate = new Date(Date.UTC(pYear, pMonth, 1)); // Date.UTC: month 0-indexed, pMonth sudah +1
+    const nextPeriode = `${nextMonthDate.getUTCFullYear()}-${String(nextMonthDate.getUTCMonth() + 1).padStart(2, "0")}`;
 
     const result = await RiwayatPenggunaan.aggregate([
       {
         $match: {
           MeterID: meteranId,
-          timestamp: { $gte: start, $lt: end },
+          tanggal: { $gte: `${periode}-01`, $lt: `${nextPeriode}-01` },
         },
       },
       {
         $group: {
-          _id: { $dayOfMonth: "$timestamp" },
-          total: { $sum: "$PenggunaanAir" },
+          // Ekstrak 2 karakter hari dari "YYYY-MM-DD" (sudah dalam WIB, tidak perlu konversi)
+          _id: { $substr: ["$tanggal", 8, 2] },
+          total: { $sum: "$totalPenggunaan" },
         },
       },
       { $sort: { _id: 1 } },
@@ -396,7 +409,8 @@ async function getTotalAllTime(meteranId: string): Promise<number> {
 
     const result = await RiwayatPenggunaan.aggregate([
       { $match: { MeterID: meteranId } },
-      { $group: { _id: null, total: { $sum: "$PenggunaanAir" } } },
+      // Dokumen MongoDB menggunakan 'totalPenggunaan' (total per hari WIB), bukan 'PenggunaanAir'
+      { $group: { _id: null, total: { $sum: "$totalPenggunaan" } } },
     ]);
 
     return result.length > 0 ? result[0].total : 0;
@@ -422,26 +436,27 @@ async function getMonthlyAverage(meteranId: string): Promise<number> {
         return parsed.monthlyAverage;
     }
 
-    const sixMonthsAgo = new Date();
-    sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+    // Hitung batas 6 bulan lalu dalam WIB
+    const sixMonthsWIB = new Date(Date.now() + WIB_OFFSET_MS);
+    sixMonthsWIB.setUTCMonth(sixMonthsWIB.getUTCMonth() - 6);
+    const sixMonthsAgoPeriode = `${sixMonthsWIB.getUTCFullYear()}-${String(sixMonthsWIB.getUTCMonth() + 1).padStart(2, "0")}`;
 
     const result = await RiwayatPenggunaan.aggregate([
       {
         $match: {
           MeterID: meteranId,
-          timestamp: { $gte: sixMonthsAgo },
+          // Filter berdasarkan 'tanggal' string WIB, bukan 'timestamp'
+          tanggal: { $gte: `${sixMonthsAgoPeriode}-01` },
         },
       },
       {
         $group: {
-          _id: {
-            year: { $year: "$timestamp" },
-            month: { $month: "$timestamp" },
-          },
-          total: { $sum: "$PenggunaanAir" },
+          // Grup per bulan: ambil 7 karakter pertama "YYYY-MM" dari tanggal
+          _id: { $substr: ["$tanggal", 0, 7] },
+          total: { $sum: "$totalPenggunaan" },
         },
       },
-      { $sort: { "_id.year": -1, "_id.month": -1 } },
+      { $sort: { _id: -1 } },
       { $limit: 6 },
     ]);
 
@@ -674,8 +689,11 @@ export class MonitoringService {
       }
 
       const now = new Date();
-      const periodeIni = getPeriode(now);
-      const periodeLalu = getPreviousPeriode(now);
+      // Gunakan referensi waktu WIB untuk periode dan kalkulasi tanggal
+      // Penting: tanpa ini, pemakaian jam 00:00-06:59 WIB masuk ke hari/bulan sebelumnya
+      const nowWIB = new Date(now.getTime() + WIB_OFFSET_MS);
+      const periodeIni = getPeriode(nowWIB);
+      const periodeLalu = getPreviousPeriode(nowWIB);
 
       // Ambil data secara paralel untuk efisiensi
       // bulanIni = gabungan Redis (7 hari terakhir) + MongoDB (hari awal bulan yg sudah dimigrasi)
@@ -700,9 +718,9 @@ export class MonitoringService {
         ? calculateComparison(totalBulanIni, bulanLalu.totalPenggunaan)
         : null;
 
-      // Prediksi akhir bulan
+      // Prediksi akhir bulan (pakai nowWIB agar hariTerlewati/totalHari sesuai WIB)
       const prediksi =
-        totalBulanIni > 0 ? calculatePrediction(totalBulanIni, now) : null;
+        totalBulanIni > 0 ? calculatePrediction(totalBulanIni, nowWIB) : null;
 
       // Evaluasi kategori penggunaan
       const evaluasi = evaluateUsage(
@@ -733,7 +751,8 @@ export class MonitoringService {
         };
       }
 
-      const chartHarian = buildDailyChart(bulanIni, bulanLalu, now);
+      // Gunakan nowWIB agar chart 7 hari terakhir sesuai tanggal WIB
+      const chartHarian = buildDailyChart(bulanIni, bulanLalu, nowWIB);
 
       const response: MonitoringDashboardResponse = {
         success: true,
