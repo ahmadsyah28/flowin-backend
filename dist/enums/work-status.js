@@ -6,7 +6,7 @@ var EnumWorkStatusPelanggan;
     EnumWorkStatusPelanggan["DIAJUKAN"] = "Diajukan";
     EnumWorkStatusPelanggan["DITUGASKAN"] = "Ditugaskan";
     EnumWorkStatusPelanggan["DITINJAU_ADMIN"] = "DitinjauAdmin";
-    EnumWorkStatusPelanggan["SEDANG_DIKERJAKAN"] = "SedangDikerjakan";
+    EnumWorkStatusPelanggan["SEDANG_DIKERJAKAN"] = "ProsesPerbaikan";
     EnumWorkStatusPelanggan["SELESAI"] = "Selesai";
     EnumWorkStatusPelanggan["DIBATALKAN"] = "Dibatalkan";
 })(EnumWorkStatusPelanggan || (exports.EnumWorkStatusPelanggan = EnumWorkStatusPelanggan = {}));
